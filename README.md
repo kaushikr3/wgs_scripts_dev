@@ -1,3 +1,4 @@
 # wgs_scripts
-# Anisha's WGS processing scripts
-# w/ edits
+
+original code from Anisha
+refactored, with alternate SNP, SV, and CNV analyses added and code clarified and commented
