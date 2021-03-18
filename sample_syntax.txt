@@ -1,0 +1,35 @@
+## syntax for generating new plasmid insertion reference genomes:
+##  inputs here are the fastas generated using .cm5 files from researchers, which contain the plasmids that they've transfected
+## 	rotate these plasmids such that the attP site is at base 1 (attp site can be found in the metadata directory, search for this and rotate plasmid from there)
+## 	then run with the plasmid sequence (.fa) and the insertion site (giles/l5/tweety) -- be sure to match up the order of sequnce call and insertion site!!!
+## 
+
+python plasmid_insertion.py \
+	-plasmid_seqs plasmid_tests/pGMCgZni-TSC38S38.fa,plasmid_tests/pGMCK3-TSC10M.fa \
+	-sites giles,l5 \
+	-strain Erdman \
+	-ref_genome ./../../../Reference/Erdman/Erdman.fasta \
+	-output_name dual/dual.fa \
+	-strain_summary_file dual/dual_summary.csv
+
+
+
+
+## syntax for running region check script:
+## regions file refers to the summary file generated when making the new reference genome
+## sample strains is a manually generated csv that maps the specific sample names (ie from the merged fastq directory) to the 
+##	applicable reference genome
+## be sure to generate coverage files first!
+
+
+python ../../../Scripts/region_check.py \
+	-regions_file ../ref/triple/triple_summary.csv \
+	-samples_file sample_strains.csv \
+	-stringency stringent \
+	-cov_dir cov \
+	-csv_dir csv
+
+
+
+## once you've run both of these, check out the .xlsx document that's generated. For any low coverage regions or SNPs, go 
+## look at those spots in the Rotated.cm5 file to see if these concerns exist in important areas

@@ -1,0 +1,4 @@
+metadata/
+*.ipynb
+.ipynb_checkpoints/
+.idea/

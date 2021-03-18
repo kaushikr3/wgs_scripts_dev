@@ -1,0 +1,48 @@
+name: wgs
+channels:
+  - bioconda
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - biopython=1.77=py37h60d8a13_1
+  - bz2file=0.98=py37_1
+  - ca-certificates=2020.6.24=0
+  - certifi=2020.6.20=py37_0
+  - cutadapt=1.18=py37h1de35cc_1
+  - libblas=3.8.0=17_openblas
+  - libcblas=3.8.0=17_openblas
+  - libcxx=10.0.1=h5f48129_0
+  - libffi=3.2.1=hb1e8313_1007
+  - libgfortran=4.0.0=2
+  - liblapack=3.8.0=17_openblas
+  - libopenblas=0.3.10=openmp_h63d9170_4
+  - llvm-openmp=10.0.1=h28b9765_0
+  - natsort=7.0.1=py_0
+  - ncls=0.0.53=py37hea0d0e9_2
+  - ncurses=6.2=hb1e8313_1
+  - numpy=1.19.1=py37h1efc2f6_1
+  - openssl=1.1.1g=h1de35cc_0
+  - pandas=1.1.0=py37hdadc0f0_0
+  - pigz=2.4=ha441bb4_0
+  - pip=20.2.2=py_0
+  - pyranges=0.0.83=pyh864c0ab_0
+  - pyrle=0.0.31=py37hea0d0e9_1
+  - python=3.7.8=hc9dea61_1_cpython
+  - python-dateutil=2.8.1=py_0
+  - python_abi=3.7=1_cp37m
+  - pytz=2020.1=pyh9f0ad1d_0
+  - readline=8.0=h0678c8f_2
+  - setuptools=49.6.0=py37hc8dfbb8_0
+  - six=1.15.0=pyh9f0ad1d_0
+  - sorted_nearest=0.0.31=py37h572c133_2
+  - sqlite=3.33.0=h960bd1c_0
+  - tabulate=0.8.7=py37_0
+  - tk=8.6.10=hb0a8c7a_0
+  - wheel=0.35.1=pyh9f0ad1d_0
+  - xlsxwriter=1.2.9=py_0
+  - xopen=0.7.3=py_0
+  - xz=5.2.5=haf1e3a3_1
+  - zlib=1.2.11=1007
+prefix: /Users/nataliethornton/anaconda3/envs/wgs
+
