@@ -1,5 +1,9 @@
 #!/bin/bash
 
+spack load -r python@3.7.0^gcc@6.3.0
+spack load samtools@1.9%gcc@6.3.0
+spack load bwa@0.7.15%gcc@6.3.0
+
 # runs all wgs analysis scripts:
 # READ IN ARGUMENTS
 # usage:

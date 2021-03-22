@@ -47,11 +47,10 @@ do
   		FILES_R1=(${BASE}*R1_001.fastq.gz)
   		FILES_R2=(${BASE}*R2_001.fastq.gz)
 		
-  		cat "${FILES_R1[@]}" > fastq/merged_untrimmed/"${OUTNAME}R1_001.fastq.gz"
-  		echo "Merged "${FILES_R1}" into ${OUTNAME}_R1_001.fastq.gz"
-
+  		echo "Merged ${FILES_R1} & ${FILES_R2} into ${OUTNAME}_R1_001.fastq.gz & ${OUTNAME}_R2_001.fastq.gz"
+		
+  		cat "${FILES_R1[@]}" > fastq/merged_untrimmed/"${OUTNAME}R1_001.fastq.gz" &
   		cat "${FILES_R2[@]}" > fastq/merged_untrimmed/"${OUTNAME}R2_001.fastq.gz"
-  		echo "Merged "${FILES_R2}" into ${OUTNAME}_R2_001.fastq.gz"
 
 done
 

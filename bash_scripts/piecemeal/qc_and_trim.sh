@@ -5,6 +5,10 @@
 # trimgalore
 # cutadapt
 # samtools
+spack load fastqc
+spack load -r py-cutadapt@1.13
+spack load trimgalore
+
 
 # DIRECTORY SETUP
 mkdir fastq
@@ -33,3 +37,10 @@ for f in fastq/merged_untrimmed/*R1_001.fastq.gz
 					--fastqc --fastqc_args "-t 2 --extract -o reports/fastqc_trimmed_out" \
 					"${f}" "${f/R1/R2}"
 	done
+
+
+spack unload fastqc
+spack unload -r py-cutadapt@1.13
+spack unload trimgalore
+
+
