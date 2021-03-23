@@ -7,7 +7,7 @@ conda activate snippy
 # READ IN ARGUMENTS
 # usage:
 function usage {
-        echo "Usage: $(basename $0) [-R]" 2>&1
+        echo "Usage: $(basename $0) [-R] [-N]" 2>&1
         echo '   -R   path to reference_genome.gbk'
         echo '   -N   number of processors available'
         exit 1
@@ -43,7 +43,9 @@ for f in fastq/*R1_001_val_1.fq.gz
 	do
 		   	OUTNAME=$(basename ${f}) 
 			
-			snippy --cpus "$NUM_CORES" --outdir snippy --ref "$REF" --prefix $OUTNAME --cleanup \
+			snippy --cpus "$NUM_CORES" --cleanup --force \
+					--outdir snippy --prefix $OUTNAME \
+					--reference "$REF" \
 					--R1 "$f" --R2 "${f/R1_001_val_1/R2_001_val_2}"
 
 	done
