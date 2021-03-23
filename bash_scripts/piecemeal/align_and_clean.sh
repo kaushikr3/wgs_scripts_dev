@@ -66,7 +66,19 @@ for f in bam/*unsorted.bam
 			picard CleanSam \
 					INPUT="$f" \
 					OUTPUT="${f/unsorted.bam/unsorted.cleaned.bam}"
-	
+
+      picard AddOrReplaceReadGroups \
+          I="$f" O="${f/unsorted.cleaned/RG}" \
+          RGID="${BASE/unsorted.cleaned.bam/}" \
+          RGPL=ILLUMINA \
+          RGLB=lib \
+          RGPU=unit \
+          RGSM="${BASE/unsorted.cleaned.bam/}"
+#          RGSM=sample \
+#          RGLB="${a/_sorted.bam/}" \
+#          RGPU="${f/_sorted.bam/}" \
+#          USE_JDK_DEFLATER=true USE_JDK_INFLATER=true
+
 			# sort bam 
 			samtools sort -o "${f/unsorted/sorted}" -O bam -T temp -@ 8 "${f/unsorted.bam/unsorted.cleaned.bam}"
 		   

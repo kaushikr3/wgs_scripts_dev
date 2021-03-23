@@ -136,9 +136,9 @@ for f in bam/*unsorted.bam
 					ASSUME_SORTED=true
 	
 	    	  # removing the add or replace read groups steps here
-	#				java -jar ~/biotools/picard/build/libs/picard.jar AddOrReplaceReadGroups VALIDATION_STRINGENCY=LENIENT \
-	#						I="$f" O="${f/sorted/RG}" RGID="${f/_sorted.bam/}" RGLB="${a/_sorted.bam/}" RGPL=ILLUMINA \
-	#						RGPU="${f/_sorted.bam/}" RGSM="${f/_sorted.bam/}" USE_JDK_DEFLATER=true USE_JDK_INFLATER=true
+					java -jar ~/biotools/picard/build/libs/picard.jar AddOrReplaceReadGroups VALIDATION_STRINGENCY=LENIENT \
+							I="$f" O="${f/sorted/RG}" RGID="${f/_sorted.bam/}" RGLB="${a/_sorted.bam/}" RGPL=ILLUMINA \
+							RGPU="${f/_sorted.bam/}" RGSM="${f/_sorted.bam/}" USE_JDK_DEFLATER=true USE_JDK_INFLATER=true
 	
 					#java -jar $picard_path MarkDuplicates \
 					#java -jar ~/biotools/picard/build/libs/picard.jar MarkDuplicates \
