@@ -39,14 +39,14 @@ echo "%%%%%%%%%%    MANTA     %%%%%%%%%%%"
 for f in bam/*dedup.bam
 	do
 	  BASE=$(basename ${f})
-	  mkdir manta/"${BASE/.dedup.bam/}"
+	  mkdir manta/"${BASE/_dedup.bam/}"
 
     ~biotools/manta-1.6.0.centos6_x86_64/bin/configManta.py \
         --bam "$f" \
         --referenceFasta "$REF" \
-        --runDir manta/"${BASE/.dedup.bam/}"
+        --runDir manta/"${BASE/_dedup.bam/}"
 
-    manta/"${BASE/.dedup.bam/}"/runWorkflow.py -j "$NUM_CORES"
+    manta/"${BASE/_dedup.bam/}"/runWorkflow.py -j "$NUM_CORES"
 
   done
 
@@ -57,11 +57,11 @@ for f in bam/*dedup.bam
   do
 
     BASE=$(basename ${f})
-    mkdir pilon/"${BASE/.dedup.bam/}"
+    mkdir pilon/"${BASE/_dedup.bam/}"
 
     java -jar ~/biotools/pilon-1.24.jar \
       --genome "$REF" --bam "$f" \
-      --outdir pilon/"${BASE/.dedup.bam/}" \
+      --outdir pilon/"${BASE/_dedup.bam/}" \
       --variant --tracks --nostrays
 
   done
