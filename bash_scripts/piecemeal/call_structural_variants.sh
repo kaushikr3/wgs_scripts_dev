@@ -41,7 +41,7 @@ for f in bam/*dedup.bam
 	  BASE=$(basename ${f})
 	  mkdir manta/"${BASE/_dedup.bam/}"
 
-    ~biotools/manta-1.6.0.centos6_x86_64/bin/configManta.py \
+    ~/biotools/manta-1.6.0.centos6_x86_64/bin/configManta.py \
         --bam "$f" \
         --referenceFasta "$REF" \
         --runDir manta/"${BASE/_dedup.bam/}"
@@ -66,4 +66,4 @@ for f in bam/*dedup.bam
 
   done
 
-# run CNGpro
+## run CNGpro

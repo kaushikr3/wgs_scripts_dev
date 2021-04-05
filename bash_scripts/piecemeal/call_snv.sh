@@ -6,7 +6,7 @@
 # picard
 # gatk
 # freebayes
-
+spack load bcftools@1.9%gcc@6.3.0
 
 # READ IN ARGUMENTS
 # usage:
@@ -49,23 +49,29 @@ for f in bam/*dedup.bam
 			
 			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller --sample-ploidy 1 \
 					-R "$REF" -I "$f" \
-				   	-O gatk/"${BASE/dedup.bam/gatk.haploid.vcf}" &
+				   	-O gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
+
+			bcftools filter -O v -e '%QUAL<20' -e 'INFO/DP<=5' -o "${f/gatk/gatk.filt}" "$f"
 		   
-			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller \
-				   	-R "$REF" -I "$f" \
-				   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
+			#~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller \
+			#	   	-R "$REF" -I "$f" \
+			#	   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
 
 	done
 
 
 # FREEBAYES
 
-#for f in bam/*.dedup.bam
-for f in bam/*strict.dedup.bam
+for f in bam/*dedup.bam
 do
 	   	echo "Running freebayes on ${f}" 
 	   	BASE=$(basename "${f}")
 
-	   	~/biotools/freebayes-1.3.4-linux-static-AMD64 -f "$REF" --ploidy 1 "$f" > freebayes/"${BASE/dedup.bam/freebayes.vcf}" &
-	   	~/biotools/freebayes-1.3.4-linux-static-AMD64 -f "$REF" --ploidy 1 "${f/strict/lenient}" > freebayes/"${BASE/dedup.bam/freebayes.vcf}"
+	   	~/biotools/freebayes-1.3.4-linux-static-AMD64 -f "$REF" --ploidy 1 "$f" | \
+				bcftools filter -O v \
+				-e '%QUAL<20' -e 'DP<=5' -e 'SAF == 0 || SAR == 0' -e '((SAF+SAR)/(SRF+SRR))<3' \
+				-o freebayes/"${BASE/dedup.bam/freebayes.filt.vcf}" -
+		
 done
+
+spack unload bcftools@1.9%gcc@6.3.0

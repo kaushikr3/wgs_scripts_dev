@@ -36,21 +36,21 @@ while getopts ${optstring} arg; do
   esac
 done
 
+echo "$NUM_CORES"
+
 ## run data processing scripts
 #source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/merge_fastq.sh -I "$IN_DIR"
 #source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/qc_and_trim.sh
-#source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/align_and_clean.sh -R "$REF"
-
-# run SNV callers
-#source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_snv.sh -R "$REF"
+source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/align_and_clean.sh -R "$REF" -N "$NUM_CORES"
+#
+## run SNV callers
+source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_snv.sh -R "$REF"
 source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/run_snippy.sh -R "$REF" -N "$NUM_CORES"
 
-
 # run SNV filters
-
+#source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_structural_variants.sh -R "$REF"
 
 # run SNV output parsing
-
-
 # run SV/CNV callers
+
 

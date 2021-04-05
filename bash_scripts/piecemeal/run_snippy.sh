@@ -41,10 +41,10 @@ echo " ----  Running SNIPPY with reference: ${REF} ----"
 # SNIPPY ANALYSIS
 for f in fastq/*R1_001_val_1.fq.gz
 	do
-		   	OUTNAME=$(basename ${f}) 
+		   	BASE=$(basename ${f}) 
 			
 			snippy --cpus "$NUM_CORES" --cleanup --force \
-					--outdir snippy --prefix $OUTNAME \
+					--outdir snippy -prefix "${BASE/_R1_001_val_1.fq.gz/}" \
 					--reference "$REF" \
 					--R1 "$f" --R2 "${f/R1_001_val_1/R2_001_val_2}"
 
