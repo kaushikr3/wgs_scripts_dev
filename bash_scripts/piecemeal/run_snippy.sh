@@ -50,6 +50,22 @@ for f in fastq/*R1_001_val_1.fq.gz
 
 	done
 
+
+echo "Left aligning and parsing snippy VCFs"
+for f in snippy/*.filt.vcf
+do
+		BASE=$(basename ${f})
+		vcfleftalign -r "$REF" "$f" > "${f/.vcf/.leftalign.vcf}"
+		
+		~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "${f/.vcf/.leftalign.vcf}" \
+				-F CHROM -F POS -F REF -F ALT -F QUAL -F AC -F AF -F QD \
+				-GF AD -GF DP -GF GQ -GF GT -GF PL \
+				-O vcf_parse/"${BASE/.vcf/_snippy.tsv}"
+
+done
+
+
+
 conda deactivate
 spack unload miniconda3@4.6.14
 

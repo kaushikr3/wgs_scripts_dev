@@ -33,7 +33,7 @@ for f in fastq/merged_untrimmed/*_001.fastq.gz
 for f in fastq/merged_untrimmed/*R1_001.fastq.gz
 	do
 			echo "Running TrimGalore on:  ${f}  ${f/R1/R2}"
-			trim_galore --quality 30 --paired --output_dir fastq \
+			trim_galore --paired --output_dir fastq \
 					--fastqc --fastqc_args "-t 2 --extract -o reports/fastqc_trimmed_out" \
 					"${f}" "${f/R1/R2}"
 	done
