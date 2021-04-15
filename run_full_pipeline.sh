@@ -41,12 +41,12 @@ done
 echo "$NUM_CORES"
 
 ## run data processing scripts
-#source ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/merge_fastq.sh -I "$IN_DIR"
+~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/merge_fastq.sh -I "$IN_DIR"
 ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/qc_and_trim.sh
 ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/align_and_clean.sh -R "$REF_FA" -N "$NUM_CORES"
 
 ## run snippy 
-sbatch --export=R="$REF_GBK" ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/sbatch_snippy.sh
+sbatch --export=R="$REF_FA",G="$REF_GBK" ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/sbatch_snippy.sh
 
 ## run variant callers
 ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_snv.sh -R "$REF_FA"

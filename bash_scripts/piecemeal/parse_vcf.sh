@@ -4,7 +4,9 @@
 # vcflib
 # gatk
 
-spack load miniconda3@4.6.14
+source ~/.bashrc
+
+#spack load miniconda3@4.6.14
 conda activate snippy
 
 
@@ -36,7 +38,9 @@ while getopts ${optstring} arg; do
 done
 
 
-echo "Left aligning and parsing gatk VCFs" for f in gatk/*.filt.vcf
+echo "Left aligning and parsing gatk VCFs" 
+
+for f in gatk/*.filt.vcf
 do 
 		BASE=$(basename ${f})	
 		vcfleftalign -r "$REF" "$f" > "${f/.vcf/.leftalign.vcf}" 
@@ -49,6 +53,7 @@ do
 done
 
 echo "Left aligning and parsing freebayes VCFs"
+
 for f in freebayes/*.filt.vcf
 do 
 		BASE=$(basename ${f})	
@@ -76,19 +81,19 @@ do
 
 done
 
-#echo "Left aligning and parsing snippy VCFs"
-#for f in snippy/*.filt.vcf
-#do 
-#		BASE=$(basename ${f})	
-#		vcfleftalign -r "$REF" "$f" > "${f/.vcf/.leftalign.vcf}" 
-#		
-#		~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "${f/.vcf/.leftalign.vcf}" \
-#				-F CHROM -F POS -F REF -F ALT -F QUAL -F AC -F AF -F QD \
-#				-GF AD -GF DP -GF GQ -GF GT -GF PL \
-#				-O vcf_parsed/"${BASE/.vcf/.tsv}"
-#
-#done
+echo "Left aligning and parsing snippy VCFs"
+for f in snippy/*.filt.vcf
+do 
+		BASE=$(basename ${f})	
+		vcfleftalign -r "$REF" "$f" > "${f/.vcf/.leftalign.vcf}" 
+		
+		~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "${f/.vcf/.leftalign.vcf}" \
+				-F CHROM -F POS -F REF -F ALT -F QUAL -F AC -F AF -F QD \
+				-GF AD -GF DP -GF GQ -GF GT -GF PL \
+				-O vcf_parsed/"${BASE/.vcf/.tsv}"
 
-conda deactivate
-spack unload miniconda3@4.6.14
+done
+
+#conda deactivate
+#spack unload miniconda3@4.6.14
 

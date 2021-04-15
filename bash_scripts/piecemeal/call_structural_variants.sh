@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # DEPENDENCIES:
-spack load /cjzfz7f  # loads python-2.7.15
+#spack load /cjzfz7f  # loads python-2.7.15
 
 function usage {
         echo "Usage: $(basename $0) [-R] -[N]" 2>&1

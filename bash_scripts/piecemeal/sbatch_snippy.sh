@@ -17,13 +17,14 @@ echo "This job was assigned the temporary (local) directory:" $TMPDIR >> slurm_o
  
 
 # DEPENDENCIES:
-spack load miniconda3@4.6.14
+#spack load miniconda3@4.6.14
+#conda init
 conda activate snippy
 
 # DIRECTORY SETUP
 mkdir snippy
 
-echo " ----  Running SNIPPY with reference: ${R} ----"
+echo " ----  Running SNIPPY with reference: ${G} ----"
 
 # SNIPPY ANALYSIS
 for f in fastq/*R1_001_val_1.fq.gz
@@ -33,7 +34,7 @@ for f in fastq/*R1_001_val_1.fq.gz
 			
 			snippy --cpus "$SLURM_CPUS_PER_TASK" --cleanup --force \
 					--outdir snippy -prefix "${BASE/_R1_001_val_1.fq.gz/}" \
-					--reference "$R" \
+					--reference "$G" \
 					--R1 "$f" --R2 "${f/R1_001_val_1/R2_001_val_2}"
 
 	done
@@ -53,7 +54,7 @@ do
 done
 
 
-conda deactivate
-spack unload miniconda3@4.6.14
+#conda deactivate
+#spack unload miniconda3@4.6.14
 
 
