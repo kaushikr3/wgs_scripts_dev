@@ -52,13 +52,12 @@ for f in bam/*dedup.bam
 					-R "$REF" -I "$f" \
 				   	-O gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
 		   
-			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller \
-				   	-R "$REF" -I "$f" \
-				   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
+#			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller \
+#				   	-R "$REF" -I "$f" \
+#				   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
 
-			#bcftools filter -O v -e '%QUAL<20' -e 'INFO/DP<=5' -o "${f/gatk/gatk.filt}" "$f"
-			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.haploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.haploid.vcf}" &
-			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.diploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
+			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.haploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
+#			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.diploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
 	done
 
 

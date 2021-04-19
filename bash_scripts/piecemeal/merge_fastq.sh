@@ -21,6 +21,7 @@ optstring="I:"
 while getopts ${optstring} arg; do
   case "${arg}" in
     I) UNMERGED_DIR="${OPTARG}" ;;
+    O) UNMERGED_DIR="${OPTARG}" ;;
 
     ?)
       echo "Invalid option: -${OPTARG}."
@@ -31,8 +32,8 @@ while getopts ${optstring} arg; do
 done
 
 # DIRECTORY SETUP
-mkdir fastq
-mkdir fastq/merged_untrimmed
+#mkdir fastq
+#mkdir fastq/merged_untrimmed
 
 echo " ----  Processing fastq.gz files from ${UNMERGED_DIR}  ----"
 
