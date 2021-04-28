@@ -42,24 +42,24 @@ mkdir vcf_parse
 
 echo " ----  Calling SNVs with reference: ${REF} ----"
 
-# GATK ANALYSIS
-for f in bam/*dedup.bam
-	do
-			echo "Running GATK on ${f}" 
-			BASE=$(basename ${f})
-			
-			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller --sample-ploidy 1 \
-					-R "$REF" -I "$f" \
-				   	-O gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
-		   
+## GATK ANALYSIS
+#for f in bam/*dedup.bam
+#	do
+#			echo "Running GATK on ${f}" 
+#			BASE=$(basename ${f})
+#			
+#			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller --sample-ploidy 1 \
+#					-R "$REF" -I "$f" \
+#				   	-O gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
+#		   
 #			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller \
 #				   	-R "$REF" -I "$f" \
 #				   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
-
-			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.haploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
-#			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.diploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
-	done
-
+#
+##			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.haploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
+##			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.diploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
+#	done
+#
 
 # FREEBAYES
 

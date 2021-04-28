@@ -7,7 +7,7 @@
 # usage:
 function usage {
         echo "Usage: $(basename $0) [-I]" 2>&1
-        echo '   -I   path to directory holding UNMERGED fastq'
+        echo '   -I   path to unmerged_fastq directory: unmerged_fastq/*_unmerged.fastq'
         exit 1
 }
 
@@ -20,8 +20,7 @@ optstring="I:"
 
 while getopts ${optstring} arg; do
   case "${arg}" in
-    I) UNMERGED_DIR="${OPTARG}" ;;
-    O) UNMERGED_DIR="${OPTARG}" ;;
+    I) SOURCE_DIR="${OPTARG}" ;;
 
     ?)
       echo "Invalid option: -${OPTARG}."
@@ -35,10 +34,10 @@ done
 #mkdir fastq
 #mkdir fastq/merged_untrimmed
 
-echo " ----  Processing fastq.gz files from ${UNMERGED_DIR}  ----"
+echo " ----  Processing fastq.gz files from ${SOURCE_DIR}  ----"
 
 # MERGE LANE FASTQS
-for f in ${UNMERGED_DIR}/*L001_R1_001.fastq.gz
+for f in ${SOURCE_DIR}/unmerged_fastq/*L001_R1_001.fastq.gz
 do 
 
       echo "$f"
@@ -50,8 +49,8 @@ do
 		
   		echo "Merged ${FILES_R1} & ${FILES_R2} into ${OUTNAME}_R1_001.fastq.gz & ${OUTNAME}_R2_001.fastq.gz"
 		
-  		cat "${FILES_R1[@]}" > fastq/merged_untrimmed/"${OUTNAME}R1_001.fastq.gz" &
-  		cat "${FILES_R2[@]}" > fastq/merged_untrimmed/"${OUTNAME}R2_001.fastq.gz"
+  		cat "${FILES_R1[@]}" > ${SOURCE_DIR}/merged_untrimmed/"${OUTNAME}R1_001.fastq.gz" &
+  		cat "${FILES_R2[@]}" > ${SOURCE_DIR}/merged_untrimmed/"${OUTNAME}R2_001.fastq.gz"
 
 done
 
