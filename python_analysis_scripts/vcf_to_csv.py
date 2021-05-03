@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import glob
 from collections import defaultdict
 
@@ -28,7 +29,10 @@ def main():
     my_parser.add_argument('-csv_main_dir_name', type=str, default='csv')
     my_parser.add_argument('-blast_main_dir_name', type=str, default='blast')
     args = my_parser.parse_args()
-    vcf = pd.read_csv(args.vcf_path, sep='\t', header=28)
+    
+    cols = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "sample"]
+    vcf = pd.read_csv(args.vcf_path, sep='\t', comment='#', names=cols)
+    #vcf = pd.read_csv(args.vcf_path, sep='\t', header=28)
     # print(os.getcwd())
     anno_genome = SeqIO.read(args.anno_genome_path, format="genbank")
     print(anno_genome.name)
@@ -37,8 +41,10 @@ def main():
     reference_path = os.path.split(os.path.split(args.ref_genome_path)[0])[0]
 
     # reference_path = '../../../../../Reference'
-    selected_features = pd.read_csv(
-        f"~/seds/wgs/wgs_scripts/metadata/{anno_genome.name}_selected_features.csv")
+    #print(" !!! TEST: !!!!")
+    print(reference_path)
+
+    selected_features = pd.read_csv(f"~/wgs/metadata_wgs/{anno_genome.name}_selected_features.csv")
     selected_features_pr = pr.PyRanges(selected_features)
     if args.lab_ref_csv_dir != None:
         # print(args.lab_ref_csv_dir+'*.haploid.stringent.annotated.csv')
@@ -52,23 +58,31 @@ def main():
     # print(selected_features['Feature_type'].unique())
     basename = os.path.basename(args.vcf_path)
     csv_name = basename.replace('.vcf', '.annotated.csv')
-    blast_dir_name = f"./{args.blast_main_dir_name}/{''.join(basename.split('.')[:-1])}/"
+    blast_dir_name = f"{args.blast_main_dir_name}/{''.join(basename.split('.')[:-1])}/"
     os.system(f"mkdir {blast_dir_name}")
+
+    assert sys.version_info >= (3, 6)	
     output_df = vcf_to_csv(vcf, ref_genome, anno_genome,
                            selected_features_pr, stringent_lab_ref, lenient_lab_ref, blast_dir_name,
+                           os.path.split(args.anno_genome_path)[0],
                            reference_path=reference_path)
     output_df['Alt_freq'] = output_df['Alt_freq'].fillna(0)
     output_df['Alt_freq'] = output_df['Alt_freq'].replace('NA', 0)
     # print(output_df['Alt_freq'].unique())
     output_df = output_df.sort_values(by='Alt_freq', ascending=False)
-    output_df.to_csv(f"./{args.csv_main_dir_name}/{csv_name}", index=False)
+    output_df.to_csv(f"{args.csv_main_dir_name}/{csv_name}", index=False)
     return None
 
 
-def vcf_to_csv(vcf: pd.DataFrame, ref_genome: SeqRecord, anno_genome: SeqRecord, selected_features_pr: pr.PyRanges, stringent_lab_ref: pd.DataFrame, lenient_lab_ref: pd.DataFrame, blast_dir_name: str, reference_path="../../../Reference") -> pd.DataFrame:
+def vcf_to_csv(vcf: pd.DataFrame, ref_genome: SeqRecord, anno_genome: SeqRecord, 
+				selected_features_pr: pr.PyRanges, stringent_lab_ref: pd.DataFrame, lenient_lab_ref: pd.DataFrame, 
+                blast_dir_name: str, annotation_path: str, reference_path="~/wgs/Reference") -> pd.DataFrame:
     """Takes in a vcf file from GATK, adds columns with annotations of the mutations and other details"""
     # Added check to make sure the genotype fields is correct since was having strange error where some rows would only be GT:GQ:PL.
     # Decided to delete these rows and print warning
+    #print("!!!! TEST BELOW ")
+    #print(vcf.columns)
+    
     n_bad_rows = (vcf["FORMAT"]!="GT:AD:DP:GQ:PL").sum()
     if n_bad_rows > 0:
         print(f"!!!!Deleting {n_bad_rows} rows due to incomplete genotype information!!!!")
@@ -87,12 +101,30 @@ def vcf_to_csv(vcf: pd.DataFrame, ref_genome: SeqRecord, anno_genome: SeqRecord,
         4].astype(int)
     output_df['Anno_genome'] = anno_genome.name
 
-    #print("BUG BELOW:")
     #print(type(anno_genome))
     #print(type(ref_genome))
     #print(type(blast_dir_name))
+
+	# get reference blast db directory:
+    if os.path.isfile(os.path.join(annotation_path, anno_genome.name + ".fasta")):
+        reference_location = os.path.join(annotation_path, anno_genome.name + ".fasta")
+    
+    elif os.path.isfile(os.path.join(annotation_path, anno_genome.name + ".fa")):
+        reference_location = os.path.join(annotation_path, anno_genome.name + ".fa")
+    
+    elif os.path.isfile(os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fasta")):
+        reference_location = os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fasta")
+    
+    elif os.path.isfile(os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fa")):
+        reference_location = os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fa")
+    
+    else:
+        reference_location = os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fasta")
+        print(reference_location)
+        assert os.path.isfile(reference_location) # blast reference db files not found
+
     output_df[['#HSPs', 'Percent_identity', 'Anno_position']] = vcf.apply(
-        blast_ref, axis=1, args=(ref_genome, anno_genome, blast_dir_name, reference_path))
+        blast_ref, axis=1, args=(ref_genome, anno_genome, blast_dir_name, annotation_path, reference_location))
     output_df[['Location', 'Feature_type', 'Feature_name', 'Distance']] = output_df.apply(
         extract_features, axis=1, args=(selected_features_pr,))
     cols_to_explode = ['Feature_type', 'Feature_name', 'Distance']
@@ -109,7 +141,7 @@ def vcf_to_csv(vcf: pd.DataFrame, ref_genome: SeqRecord, anno_genome: SeqRecord,
     # get metadata, if exists
     # if os.path.exists(os.path.join('~/seds/wgs/wgs_scripts/metadata/', anno_genome.name + '_gene_details.csv')):
     gene_details = pd.read_csv(
-        f"~/seds/wgs/wgs_scripts/metadata/{anno_genome.name}_gene_details.csv")
+        f"~/wgs/metadata_wgs/{anno_genome.name}_gene_details.csv")
     output_df = pd.merge(output_df, gene_details, left_on=[
                          'Feature_name'], right_on=['ORF'], how='left').drop(columns='ORF')
     cols_to_group = ['Distance', 'Feature_type', 'Feature_name',
@@ -135,12 +167,31 @@ def vcf_to_csv(vcf: pd.DataFrame, ref_genome: SeqRecord, anno_genome: SeqRecord,
     return output_df
 
 
-def blast_ref(row: pd.Series, ref_genome: SeqRecord, anno_genome: SeqRecord, blast_dir_name: str, reference_path="../../../Reference", query_len=100) -> pd.Series:
+def blast_ref(row: pd.Series, ref_genome: SeqRecord, anno_genome: SeqRecord, blast_dir_name: str, 
+				annotation_path: str, reference_location: str, query_len=100) -> pd.Series:
     """For each row, uses the reference position to create a query sequence of length query length. This is then blast-ed against the annotated genome. The alignment is verified and details are returned as a Series"""
     # Note that reference genome is zero-indexed and ref position is 1-indexed
     ref_position = row['POS']
     ref = row['REF']
-    reference_location = os.path.join(reference_path, anno_genome.name, anno_genome.name + ".fasta")
+	
+    #reference_location = os.path.join(reference_path, anno_genome.name, anno_genome.name + ".fasta")
+    #if os.path.isfile(os.path.join(annotation_path, anno_genome.name + ".fasta")):
+    #    reference_location = os.path.join(annotation_path, anno_genome.name + ".fasta")
+    #
+    #elif os.path.isfile(os.path.join(annotation_path, anno_genome.name + ".fa")):
+    #    reference_location = os.path.join(annotation_path, anno_genome.name + ".fa")
+    #
+    #elif os.path.isfile(os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fasta")):
+    #    reference_location = os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fasta")
+    #
+    #elif os.path.isfile(os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fa")):
+    #    reference_location = os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fa")
+    #
+    #else:
+    #    reference_location = os.path.join(annotation_path, os.path.split(annotation_path)[1] + ".fasta")
+    #    print(reference_location)
+    #    assert os.path.isfile(reference_location) # blast reference db files not found
+    
     # print(ref)
     file_name = str(ref_position)
     query_len = int(query_len)
@@ -151,7 +202,7 @@ def blast_ref(row: pd.Series, ref_genome: SeqRecord, anno_genome: SeqRecord, bla
     with open(query_path, "w") as o:
         SeqIO.write(query_seq, o, "fasta")
     output_path = f"{blast_dir_name}results_{file_name}.xml"
-    #print(reference_location)
+    
     os.system(
         f"blastn -db {reference_location} -query {query_path} -out {output_path} -outfmt 5")
     result_handle = open(output_path)
@@ -288,7 +339,7 @@ def extract_missense(ref_protein: str, mut_protein: str) -> List:
         mut_aa = mut_protein[n]
         if ref_aa != mut_aa:
             # make it 1 indexed
-            missense_aa.append(f"{ref_aa}{n+1}{mut_aa}")
+            missense_aa.append("{ref_aa}{n+1}{mut_aa}")
     if len(missense_aa) == 0:
         return [np.nan, 'Silent']
     return [','.join(missense_aa), 'Missense']

@@ -54,7 +54,7 @@ echo "$NUM_CORES"
 #sbatch --export=R="$REF_FA",G="$REF_GBK" ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/sbatch_snippy.sh
 
 ## run variant callers
-~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_snv.sh -R "$REF_FA"
+#~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_snv.sh -R "$REF_FA"
 #~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_structural_variants.sh -R "$REF_FA"
 
 ## run vcf parsing

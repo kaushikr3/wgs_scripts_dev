@@ -30,7 +30,7 @@ def main():
     args = my_parser.parse_args()
 
     names = [Path(x).stem for x in glob.glob(f'./{args.cov_dir}/*.cov')]
-    pdim_range = pd.read_csv('~/seds/wgs/wgs_scripts/metadata/PDIM_locations.csv')
+    pdim_range = pd.read_csv('~/wgs/metadata_wgs/PDIM_locations.csv')
     # pdim_features = pd.read_csv(
     #     f'./../../../Scripts/metadata/PDIM_{args.strain}_features.csv')
     covs = [pd.read_csv(f'./{args.cov_dir}/{name}.cov', header=None,
@@ -38,13 +38,15 @@ def main():
 
     if args.stringency == 'lenient':
         csvs = [pd.read_csv(
-            f'./{args.csv_dir}/{name}_diploid.lenient.annotated.csv') for name in names]
+            f'./{args.csv_dir}/{name}_gatk.diploid.annotated.csv') for name in names]
+        csvs_dict = dict(zip(names, csvs))
     else:
         csvs = [pd.read_csv(
-            f'./{args.csv_dir}/{name}_haploid.stringent.annotated.csv') for name in names]
+            f'./{args.csv_dir}/{name}_gatk.haploid.annotated.csv') for name in names]
+        csvs_dict = dict(zip(names, csvs))
 
     selected_features = pd.read_csv(
-        f"~/seds/wgs/wgs_scripts/metadata/PDIM_{args.strain}_features.csv")
+        f"~/wgs/metadata_wgs/PDIM_{args.strain}_features.csv")
     selected_features_pr = pr.PyRanges(selected_features)
     genome = SeqIO.read(args.genome_path, format="genbank")
 
@@ -68,7 +70,8 @@ def main():
     summary_df['PDIM_status'] = summary_df.apply(check_pdim, axis=1)
 
     # for snps
-    snps_df = pd.concat([extract_snp_details(csv, start, end) for csv in csvs])
+    snps_df = pd.concat([extract_snp_details(csv, csvs_dict[csv], start, end) for csv in csvs_dict.keys()])
+    #snps_df = pd.concat([extract_snp_details(csv, start, end) for csv in csvs])
     if snps_df.shape[0] == 0:
         result_to_excel(f'PDIM_status_{args.stringency}.xlsx', [summary_df], [
                     'Summary'])
@@ -120,7 +123,9 @@ def check_pdim(row):
         return 'Dubious'
 
 
-def extract_snp_details(csv, start, end):
+#def extract_snp_details(csv, start, end):
+def extract_snp_details(sample_name, csv, start, end):
+    csv['Strain'] = sample_name
     snp_pdim = csv[(csv['Ref_pos'] >= start) & (csv['Ref_pos'] <= end)]
     snp_pdim['#Mutations'] = snp_pdim.shape[0]
     lab_ref_cols = ['Present_in_lab_reference_stringent',
