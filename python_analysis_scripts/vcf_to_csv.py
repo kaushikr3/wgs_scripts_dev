@@ -124,7 +124,7 @@ def vcf_to_csv(vcf: pd.DataFrame, ref_genome: SeqRecord, anno_genome: SeqRecord,
         assert os.path.isfile(reference_location) # blast reference db files not found
 
     output_df[['#HSPs', 'Percent_identity', 'Anno_position']] = vcf.apply(
-        blast_ref, axis=1, args=(ref_genome, anno_genome, blast_dir_name, annotation_path, reference_location))
+        blast_ref, axis=1, args=(ref_genome, anno_genome, blast_dir_name, reference_location))
     output_df[['Location', 'Feature_type', 'Feature_name', 'Distance']] = output_df.apply(
         extract_features, axis=1, args=(selected_features_pr,))
     cols_to_explode = ['Feature_type', 'Feature_name', 'Distance']
@@ -168,7 +168,7 @@ def vcf_to_csv(vcf: pd.DataFrame, ref_genome: SeqRecord, anno_genome: SeqRecord,
 
 
 def blast_ref(row: pd.Series, ref_genome: SeqRecord, anno_genome: SeqRecord, blast_dir_name: str, 
-				annotation_path: str, reference_location: str, query_len=100) -> pd.Series:
+				reference_location: str, query_len=100) -> pd.Series:
     """For each row, uses the reference position to create a query sequence of length query length. This is then blast-ed against the annotated genome. The alignment is verified and details are returned as a Series"""
     # Note that reference genome is zero-indexed and ref position is 1-indexed
     ref_position = row['POS']
@@ -243,6 +243,7 @@ def extract_features(row: pd.Series, selected_features_pr: pr.PyRanges) -> pd.Se
     if anno_position == 'Undetermined':
         return pd.Series({k: v for k, v in zip(['Location', 'Feature_type', 'Feature_name', 'Distance'], ['Undetermined']*4)})
     # selected_features and anno_position are 1-indexed
+    anno_position = int(float(anno_position))
     pos_pr = pr.PyRanges(chromosomes=selected_features_pr.chromosomes[0],
                          starts=[anno_position],
                          ends=[anno_position])
@@ -286,7 +287,7 @@ def annotate_aa(row: pd.Series, selected_features_pr: pr.PyRanges, anno_genome: 
     ref = row['Ref']
     alt = row['Alt']
     if len(ref) == len(alt):
-        anno_position = int(row['Anno_position'])
+        anno_position = int(float(row['Anno_position']))
         ref_protein, mut_protein = mutate_protein(
             anno_position, ref, alt, row['Feature_name'], selected_features_pr, anno_genome)
         aa_columns['AA_change'], aa_columns['Mutation_type'] = extract_missense(
@@ -339,7 +340,7 @@ def extract_missense(ref_protein: str, mut_protein: str) -> List:
         mut_aa = mut_protein[n]
         if ref_aa != mut_aa:
             # make it 1 indexed
-            missense_aa.append("{ref_aa}{n+1}{mut_aa}")
+            missense_aa.append(f"{ref_aa}{n+1}{mut_aa}")
     if len(missense_aa) == 0:
         return [np.nan, 'Silent']
     return [','.join(missense_aa), 'Missense']
