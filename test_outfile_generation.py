@@ -1,4 +1,9 @@
 import unittest
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio import SeqIO
+from Bio import GenBank
 
 from python_analysis_scripts.generate_variant_outfiles import generate_annotation_series
 
@@ -10,7 +15,7 @@ class VCF_formatting(unittest.TestCase):
 
 
 class GenBank_parsing_for_annotation(unittest.TestCase):
-    gbk_path = ""
+    gbk_path = "test_files/test_annotation.gbk"
     gb_rec = [rec for rec in SeqIO.parse(gbk_path, "genbank")][0]
     gb_feats = [feat for feat in gb_rec.features if ((feat.type != "gene") & (feat.type != "source"))]
 
