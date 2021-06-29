@@ -36,6 +36,7 @@ def main():
     ref_genome = SeqIO.read(args.ref_genome_path, format="fasta")
     reference_path = os.path.split(os.path.split(args.ref_genome_path)[0])[0]
 
+
     reference_path = '../../../../../Reference'
     selected_features = pd.read_csv(
         f"~/seds/wgs/wgs_scripts/metadata/{anno_genome.name}_selected_features.csv")
