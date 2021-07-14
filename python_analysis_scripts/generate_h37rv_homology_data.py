@@ -20,7 +20,7 @@ def blast_h37rv(row: pd.Series, ref_genome: SeqRecord, anno_genome: SeqRecord, b
     """For each row, uses the reference position to create a query sequence of length query length. 
     This is then blast-ed against the annotated genome. The alignment is verified and details are returned as a Series"""
     # Note that reference genome is zero-indexed and ref position is 1-indexed
-    ref_position = row['Ref_pos']
+    ref_position = row['Pos']
     ref = row['Ref']
 
     file_name = str(ref_position)
@@ -192,6 +192,6 @@ def main():
 
         df.to_csv(os.path.join(args.csv_dir_new, file), index=False)
 
-    
+
 if __name__ == "__main__":
     main()
