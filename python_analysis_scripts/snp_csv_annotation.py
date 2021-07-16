@@ -38,7 +38,19 @@ lab_reference_dict = {
     'Erdman': '~/wgs/Reference/Lab_references/Erdman_Caro/csv/',
     'BCG': '~/wgs/Reference/Lab_references/BCG_WT_Josh/csv/'
     }
-
+#
+# genbank_dict = {
+#     'H37Rv': 'reference_files/AL123456.gbk',
+#                 # 'Erdman':
+#                 'Msmeg': 'reference_files/NC_008596.gb',
+#                 'BCG': 'reference_files/BCG_Pasteur.gb'}
+#
+#
+# fasta_dict = {'H37Rv': 'reference_files/H37RvCO.fasta',
+#               # 'Erdman':
+#               'Msmeg': 'reference_files/NC_008596.fa',
+#               'BCG': 'reference_files/BCG_Pasteur.fa'}
+#
 
 # VCF Column formatting:
 format_cols_dict = {
@@ -117,13 +129,13 @@ def main():
 
         print(vcf_dict)
         df = get_full_annotated_csv(vcf_dict['gatk_haploid'], vcf_dict['gatk_diploid'], vcf_dict['freebayes'],
-                                    args.ref_strain, args.h37rv_homology, blast_sub_dir, args.lab_snp_csv_dir)
+                                    args.ref_strain, args.h37rv_homology, blast_sub_dir, args.lab_strain)
 
         write_excel_file(df, os.path.join(args.out, sample + "_SNP.xlsx"))
 
 
 def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, freebayes_parsed_path,
-                           reference_strain, h37rv_homology=False, blast_dir=None, lab_variant_csv_path=None):
+                           reference_strain, h37rv_homology=False, blast_dir=None, lab_strain=None):
     """
     Generates fully annotated SNP df with reference annotation, H37Rv homology, and lab strain intersection
 
@@ -133,7 +145,7 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, f
     :param reference_strain: Name of reference strain (strain aligned against -- list H37Rv NOT H37RvCO)
     :param h37rv_homology: Whether to generate and return H37Rv homology data (only used for non-H37Rv samples)
     :param blast_dir: Path to directory to store blast results in (generated for H37Rv and H37Rv homolog samples)
-    :param lab_variant_csv_path: Path to directory holding lab SNP CSV files
+    :param lab_strain: Name of Lab strain to pull into annotation, if using (str)
 
     :return: Fully annotated SNP df, ready to be written to outfile
     """
@@ -160,7 +172,7 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, f
     # if reference is H37Rv, get H37RvCO to H37Rv homolog information and merge in annotation data:
     if reference_strain == 'H37Rv':
         h37rv_annotation_location = fasta_dict['H37Rv']
-		h37rvCO_reference_genome = SeqIO.read(fasta_dict['H37RvCO'], format="fasta")
+        h37rvCO_reference_genome = SeqIO.read(fasta_dict['H37RvCO'], format="fasta")
 
         df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
             blast_h37rv, axis=1, args=(h37rvCO_reference_genome.seq, blast_dir, h37rv_annotation_location))
