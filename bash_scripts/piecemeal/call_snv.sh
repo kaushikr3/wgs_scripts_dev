@@ -38,28 +38,27 @@ done
 # DIRECTORY SETUP
 mkdir gatk
 mkdir freebayes
-mkdir vcf_parse
 
 echo " ----  Calling SNVs with reference: ${REF} ----"
 
 # GATK ANALYSIS
-for f in bam/*dedup.bam
-	do
-			echo "Running GATK on ${f}" 
-			BASE=$(basename ${f})
-			
-			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller --sample-ploidy 1 \
-					-R "$REF" -I "$f" \
-				   	-O gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
-		   
-			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller \
-				   	-R "$REF" -I "$f" \
-				   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
-
-#			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.haploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
-#			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.diploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
-	done
-
+#for f in bam/*dedup.bam
+#	do
+#			echo "Running GATK on ${f}" 
+#			BASE=$(basename ${f})
+#			
+#			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller --sample-ploidy 1 \
+#					-R "$REF" -I "$f" \
+#				   	-O gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
+#		   
+#			~/biotools/gatk-4.2.0.0/gatk HaplotypeCaller \
+#				   	-R "$REF" -I "$f" \
+#				   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
+#
+##			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.haploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
+##			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.diploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
+#	done
+#
 
 # FREEBAYES
 
@@ -68,11 +67,14 @@ do
 	   	echo "Running freebayes on ${f}" 
 	   	BASE=$(basename "${f}")
 
-	   	~/biotools/freebayes-1.3.4-linux-static-AMD64 -f "$REF" --ploidy 1 "$f" | \
-				bcftools filter -O v \
-				-e 'DP<=5' -e 'SAF == 0 || SAR == 0' \
-				-o freebayes/"${BASE/dedup.bam/freebayes.filt.vcf}" -
+	   	~/biotools/freebayes-1.3.4-linux-static-AMD64 -f "$REF" \
+				--ploidy 1 "$f" > freebayes/"${BASE/dedup.bam/freebayes.vcf}"
+				#| bcftools filter -O v \
+				#-e 'DP<=5' -e 'SAF == 0 || SAR == 0' \
+				#-o freebayes/"${BASE/dedup.bam/freebayes.filt.vcf}" -
 		
 done
 
 spack unload bcftools@1.9%gcc@6.3.0
+
+

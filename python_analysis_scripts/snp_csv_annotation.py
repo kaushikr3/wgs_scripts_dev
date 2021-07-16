@@ -12,16 +12,32 @@ from Bio.Blast import NCBIXML
 
 
 # paths to references files:
-genbank_dict = {'H37Rv': 'reference_files/AL123456.gbk',
-                # 'Erdman':
-                'Msmeg': 'reference_files/NC_008596.gb',
-                'BCG': 'reference_files/BCG_Pasteur.gb'}
+genbank_dict = {
+    'H37Rv': '~/wgs/Reference/AL123456/AL123456.gbk',
+	'HN878': '~/wgs/Reference/NZ_CM001043/NZ_CM001043.gbk',
+    'Erdman': '~/wgs/Reference/Erdman/Erdman.gbk',
+    'Msmeg': '~/wgs/Reference/NC_008596/NC_008596.gb',
+    'BCG': '~/wgs/Reference/BCG_Pasteur/BCG_Pasteur.gb'
+    }
 
 
-fasta_dict = {'H37Rv': 'reference_files/H37RvCO.fasta',
-              # 'Erdman':
-              'Msmeg': 'reference_files/NC_008596.fa',
-              'BCG': 'reference_files/BCG_Pasteur.fa'}
+fasta_dict = {
+    'H37Rv': '~/wgs/Reference/AL123456/AL123456.fasta',
+	'H37RvCO': '~/wgs/Reference/H37RvCO/H37RvCO.fasta',
+	'HN878': '~/wgs/Reference/NZ_CM001043/NZ_CM001043.fasta',
+    'Erdman': '~/wgs/Reference/Erdman/Erdman.fasta',
+    'Msmeg': '~/wgs/Reference/NC_008596/NC_008596.fasta',
+    'BCG': '~/wgs/Reference/BCG_Pasteur/BCG_Pasteur.fa'
+    }
+
+
+lab_reference_dict = {
+    'North': '~/wgs/Reference/Lab_references/H37Rv_Jamie_North/csv/',
+    'UMass': '~/wgs/Reference/Lab_references/H37Rv_Caro_UMass/csv/',
+	'HN878': '~/wgs/Reference/Lab_references/HN878_ref_Jamie/csv/',
+    'Erdman': '~/wgs/Reference/Lab_references/Erdman_Caro/csv/',
+    'BCG': '~/wgs/Reference/Lab_references/BCG_WT_Josh/csv/'
+    }
 
 
 # VCF Column formatting:
@@ -51,27 +67,27 @@ def main():
     """
     parse = argparse.ArgumentParser(prog='SNP_annotation')
 
-    parse.add_argument('-ref_strain', required=True, dest='ref_strain', type=str,
-                       help='Path to reference genbank')
+    parse.add_argument('-ref_strain', required=True, dest='ref_strain', type=str, 
+                       choices={'H37Rv', 'Erdman', 'HN878', 'BCG', 'Msmeg'},
+                       help='Name of reference strain used in alignemnt (H37Rv if H37RvCO used')
 
     parse.add_argument('--H37Rv', action='store_true', dest='h37rv_homology',
                        help='Pass to generate H37Rv homology annotation data, must also pass -blast with this arg')
 
-    parse.add_argument('-blast', required=False, dest='blast_dir', type=str,
+    parse.add_argument('-blast', required=False, dest='blast_dir', type=str, default=None,
                        help='Path to directory to write blast files into')
 
-    parse.add_argument('-lab_snp_path', required=False, dest='lab_snp_csv_dir', type=str, default=None,
-                       help='Path to directory holding lab strain SNP csvs')
+    parse.add_argument('-lab_strain', required=False, dest='lab_strain', type=str, default=None,
+                       choices={'North', 'UMass', 'Erdman', 'HN878', 'BCG'},
+                       help='(Optional) Name of lab reference strain to add to annotation, if desired')
 
-    parse.add_argument('-parsed_vcf', required=True, dest='vcf_dir', type=str,
-                       help='Path to directory holding parsed vcfs')
+    parse.add_argument('-vcf', required=True, dest='vcf_dir', type=str,
+                       help='Path to directory holding PARSED vcfs')
 
     parse.add_argument('-out', required=True, dest='out', type=str,
                        help='Path to directory to write excel files into')
 
     args = parse.parse_args()
-
-    # make new csv and blast directories
     os.system(f"mkdir {args.out}")
 
     if args.h37rv_homology or args.ref_strain == 'H37Rv':
@@ -144,8 +160,10 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, f
     # if reference is H37Rv, get H37RvCO to H37Rv homolog information and merge in annotation data:
     if reference_strain == 'H37Rv':
         h37rv_annotation_location = fasta_dict['H37Rv']
+		h37rvCO_reference_genome = SeqIO.read(fasta_dict['H37RvCO'], format="fasta")
+
         df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
-            blast_h37rv, axis=1, args=(ref_genbank.seq, blast_dir, h37rv_annotation_location))
+            blast_h37rv, axis=1, args=(h37rvCO_reference_genome.seq, blast_dir, h37rv_annotation_location))
 
         position_col_name = "H37Rv_homolog_position"
         df = generate_annotated_df(df, position_col_name, ref_genbank)
@@ -194,8 +212,8 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, f
                 else "{};{}".format(x[0], x[1]), axis=1)
 
     # # add lab_reference_info
-    if lab_variant_csv_path:
-        df = add_lab_ref(df, lab_variant_csv_path)
+    if lab_strain:
+        df = add_lab_ref(df, lab_reference_dict[lab_strain])
 
     df = df.fillna('NA')
 
@@ -511,13 +529,14 @@ def get_adjacent_features(anno_pr: pr.PyRanges, snp_pr: pr.PyRanges) -> pd.Serie
     return adjacent_feats
 
 
-def blast_h37rv(row: pd.Series, ref_genome: SeqRecord, blast_dir_name: str,
+def blast_h37rv(row: pd.Series, ref_genome: Seq, blast_dir_name: str,
                 annotation_ref_location: str, query_len=500) -> pd.Series:
     """
     For each row, uses the reference position to create a query sequence of length query length.
     This is then blast-ed against the annotated genome. The alignment is verified and details are returned as a Series
     :param row: SNP row entry
-    :param ref_genome: SeqRecord object of reference genbank file
+    :param ref_genome: Sequence from SeqRecord object of reference genome 
+	    (this is the sequence reads were aligned against)
     :param blast_dir_name: Name of subdirectory to store blast files in
     :param annotation_ref_location: path to Blast DB for annotation strain
     :param query_len: length of query to blast
@@ -767,3 +786,8 @@ def write_excel_file(df, filename):
 
     writer.save()
     print("Excel File Written")
+
+
+if __name__ == "__main__":
+    main()
+

@@ -58,8 +58,11 @@ def main():
     # print(selected_features['Feature_type'].unique())
     basename = os.path.basename(args.vcf_path)
     csv_name = basename.replace('.vcf', '.annotated.csv')
-    blast_dir_name = f"{args.blast_main_dir_name}/{''.join(basename.split('.')[:-1])}/"
-    os.system(f"mkdir {blast_dir_name}")
+
+    # MADE SOME CHANGES HERE; SWITCHED EVERYTHING TO OCCUR IN TEMP BLAST FILES;
+    blast_dir_name = args.blast_main_dir_name
+    #blast_dir_name = f"{args.blast_main_dir_name}/{''.join(basename.split('.')[:-1])}/"
+    #os.system(f"mkdir {blast_dir_name}")
 
     assert sys.version_info >= (3, 6)	
     output_df = vcf_to_csv(vcf, ref_genome, anno_genome,
@@ -198,10 +201,14 @@ def blast_ref(row: pd.Series, ref_genome: SeqRecord, anno_genome: SeqRecord, bla
 
     query_seq = ref_genome[ref_position-1-query_len: ref_position-1]
     # print(query_seq)
-    query_path = f"{blast_dir_name}query_{file_name}.fasta"
+
+    # MADE CHANGES HERE TO SAVE BLAST RESULTS AS TEMP FILES
+    query_path = os.path.join(blast_dir_name, "temp_query.fasta")
+    #query_path = f"{blast_dir_name}query_{file_name}.fasta"
     with open(query_path, "w") as o:
         SeqIO.write(query_seq, o, "fasta")
-    output_path = f"{blast_dir_name}results_{file_name}.xml"
+    output_path = os.path.join(blast_dir_name, "temp_results.xml")
+    #output_path = f"{blast_dir_name}results_{file_name}.xml"
     
     os.system(
         f"blastn -db {reference_location} -query {query_path} -out {output_path} -outfmt 5")

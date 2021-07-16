@@ -55,3 +55,5 @@ do
 done
 
 echo " ---- fastq.gz files merged ----  "
+
+

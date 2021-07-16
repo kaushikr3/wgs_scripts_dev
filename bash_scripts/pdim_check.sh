@@ -43,14 +43,14 @@ done
 # DIRECTORY SETUP
 mkdir cov
 
-#echo "Generating Coverage Files"
-#
-#for f in bam/*dedup.bam
-#	do
-#			BASE=$(basename ${f})
-#			bedtools genomecov -ibam "$f" -d > cov/${BASE/_dedup.bam/.cov}
-#	done
-#
+echo "Generating Coverage Files"
+
+for f in bam/*dedup.bam
+	do
+			BASE=$(basename ${f})
+			bedtools genomecov -ibam "$f" -d > cov/${BASE/_dedup.bam/.cov}
+	done
+
 echo "Running pdim_check"
 
 python ~/wgs/wgs_scripts_dev/python_analysis_scripts/pdim_check.py \

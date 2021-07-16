@@ -67,25 +67,25 @@ for f in bam/*unsorted.bam
 			BASE=$(basename ${f})
 			
 			# clean unsorted bamfile:
-			#picard CleanSam \
-			#		INPUT="$f" \
-			#		OUTPUT="${f/unsorted/unsorted.cleaned}" 
-			#
-			#picard AddOrReplaceReadGroups \
-          	#		I="${f/unsorted/unsorted.cleaned}" O="${f/unsorted/RG}" \
-          	#		RGID="${BASE/unsorted.bam/}" \
-          	#		RGPL=ILLUMINA \
-          	#		RGLB=lib \
-          	#		RGPU=unit \
-         	#		RGSM=sample
+			picard CleanSam \
+					INPUT="$f" \
+					OUTPUT="${f/unsorted/unsorted.cleaned}" 
+			
+			picard AddOrReplaceReadGroups \
+          			I="${f/unsorted/unsorted.cleaned}" O="${f/unsorted/RG}" \
+          			RGID="${BASE/unsorted.bam/}" \
+          			RGPL=ILLUMINA \
+          			RGLB=lib \
+          			RGPU=unit \
+         			RGSM=sample
 
-#          	#		RGSM="${BASE/unsorted.bam/}"
-#         	#		RGLB="${a/_sorted.bam/}" \
-#         	#		RGPU="${f/_sorted.bam/}" \
-#         	#		USE_JDK_DEFLATER=true USE_JDK_INFLATER=true
+#          			RGSM="${BASE/unsorted.bam/}"
+#         			RGLB="${a/_sorted.bam/}" \
+#         			RGPU="${f/_sorted.bam/}" \
+#         			USE_JDK_DEFLATER=true USE_JDK_INFLATER=true
 
-			## sort bam 
-			#samtools sort -o "${f/unsorted/sorted}" -O bam -T temp -@ 8 "${f/unsorted/RG}"
+			# sort bam 
+			samtools sort -o "${f/unsorted/sorted}" -O bam -T temp -@ 8 "${f/unsorted/RG}"
 		   
 			echo "Running MarkDuplicates ${f}" 
 			picard MarkDuplicates \
