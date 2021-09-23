@@ -106,7 +106,8 @@ def main():
         os.system(f"mkdir {args.blast_dir}")
 
     files = [f for f in os.listdir(args.vcf_dir) if os.path.isfile(os.path.join(args.vcf_dir, f))]
-    samples = pd.Series(files).str.split('.', expand=True)[0].str.rstrip('gatk').str.rstrip('_').unique()
+    samples = pd.Series(files).str.split('.', expand=True
+                                         )[0].str.rstrip('freebayes').str.rstrip('gatk').str.rstrip('_').unique()
 
     for sample in samples:
         print("Running sample: ", sample)
@@ -124,21 +125,24 @@ def main():
                     vcf_dict.update({"gatk_haploid": os.path.join(args.vcf_dir, file)})
                 elif 'diploid' in file:
                     vcf_dict.update({"gatk_diploid": os.path.join(args.vcf_dir, file)})
+                elif 'freebayes' in file:
+                    vcf_dict.update({"freebayes": os.path.join(args.vcf_dir, file)})
 
         print(vcf_dict)
-        df = get_full_annotated_csv(vcf_dict['gatk_haploid'], vcf_dict['gatk_diploid'],
+        df = get_full_annotated_csv(vcf_dict['gatk_haploid'], vcf_dict['gatk_diploid'], vcf_dict['freebayes'],
                                     args.ref_strain, args.h37rv_homology, blast_sub_dir, args.lab_strain)
 
         write_excel_file(df, os.path.join(args.out, sample + "_SNP.xlsx"))
 
 
-def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
+def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, freebayes_parsed_path,
                            reference_strain, h37rv_homology=False, blast_dir=None, lab_strain=None):
     """
     Generates fully annotated SNP df with reference annotation, H37Rv homology, and lab strain intersection
 
     :param gatk_haploid_parsed_path: Path to gatk haploid/stringent parsed vcf file
     :param gatk_diploid_parsed_path: Path to gatk diplid/lenient parsed vcf file
+    :param freebayes_parsed_path: Path to freebayes parsed vcf file
     :param reference_strain: Name of reference strain (strain aligned against -- list H37Rv NOT H37RvCO)
     :param h37rv_homology: Whether to generate and return H37Rv homology data (only used for non-H37Rv samples)
     :param blast_dir: Path to directory to store blast results in (generated for H37Rv and H37Rv homolog samples)
@@ -152,15 +156,21 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
     # open SNPs
     hgatk = pd.read_csv(gatk_haploid_parsed_path, delimiter='\t')
     dgatk = pd.read_csv(gatk_diploid_parsed_path, delimiter='\t')
+    free = pd.read_csv(freebayes_parsed_path, delimiter='\t')
 
     # add SNP_tool, accuracy and error columns, and rename columns
-    hgatk = format_vcf_fields(hgatk, 'stringent')
-    dgatk = format_vcf_fields(dgatk, 'lenient')
+    hgatk = format_vcf_fields(hgatk, 'gatk')
+    dgatk = format_vcf_fields(dgatk, 'gatk')
+    free = format_vcf_fields(free, 'freebayes')
 
-    # merge SNP sets with different leniency together, so subsequent operations can be performed once:
-    df = pd.concat([hgatk, dgatk]).reset_index(drop=True)
+    # merge SNP sets from different sources together:
+    df = merge_vcf_dfs(hgatk, dgatk, free)
 
-    # if reference is H37Rv, get H37RvCO to H37Rv homology information and merge in annotation data:
+    # reorder columns and drop composite_hits:
+    df = df[['Chrom', 'Pos', 'Ref', 'Alt', 'Qual', 'Error_prob', 'Accuracy_prob', 'Tool',
+             'GT', 'GQ', 'PL', 'DP', 'RC', 'AC']]
+
+    # if reference is H37Rv, get H37RvCO to H37Rv homolog information and merge in annotation data:
     if reference_strain == 'H37Rv':
         h37rv_annotation_location = fasta_dict['H37Rv']
         h37rvCO_reference_genome = SeqIO.read(fasta_dict['H37RvCO'], format="fasta")
@@ -168,11 +178,13 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
         df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
             blast_h37rv, axis=1, args=(h37rvCO_reference_genome.seq, blast_dir, h37rv_annotation_location))
 
-        df = generate_annotated_df(df, "H37Rv_homolog_position", ref_genbank)
+        position_col_name = "H37Rv_homolog_position"
+        df = generate_annotated_df(df, position_col_name, ref_genbank)
 
     # otherwise, annotate with given reference and generate in H37Rv homology data
     else:
-        df = generate_annotated_df(df, "Pos", ref_genbank)
+        position_col_name = "Pos"
+        df = generate_annotated_df(df, position_col_name, ref_genbank)
 
         if h37rv_homology:
 
@@ -217,6 +229,32 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
         df = add_lab_ref(df, lab_reference_dict[lab_strain])
 
     df = df.fillna('NA')
+
+    return df
+
+
+def merge_vcf_dfs(haploid_gatk, diploid_gatk, free):
+    """
+
+    :param haploid_gatk: Parsed VCF df from haploid GATK SNP caller
+    :param diploid_gatk: Parsed VCF df from haploid GATK SNP caller
+    :param free: Parsed VCF df from Freebayes SNP caller
+    :return: Df with SNPs from varied callers merged, and duplicated SNPs labeled, with duplicate entries dropped
+    """
+
+    # merge GATK SNP dfs first, and drop lenient version of duplicates, then merge in freebayes SNPs
+    df = haploid_gatk.append(diploid_gatk).reset_index(drop=True)
+    df = df.sort_values(by=['Tool', 'Pos'])[~df[['Chrom', 'Pos', 'Ref', 'Alt']].duplicated()]
+    df = df.append(free).reset_index(drop=True)
+
+    # label all duplicate SNPs and drop Freebayes version of duplicates
+    df['Composite_hit'] = df[['Chrom', 'Pos', 'Ref', 'Alt']].duplicated(keep=False)
+    df = df[~(df['Composite_hit'] & (df['Tool'] == 'Freebayes'))]
+    # df = df[~((df['Composite_hit'] == True) & (df['Tool'] == 'Freebayes'))]
+
+    # Alter tool column to reflect duplicate SNP detections
+    df['Tool'] = df.apply(lambda x:
+                          x['Tool'] + '+Freebayes' if x['Composite_hit'] is True else x['Tool'], axis=1)
 
     return df
 
@@ -282,27 +320,40 @@ def get_error_probability(quality):
     return error
 
 
-def format_vcf_fields(df, stringency):
+def format_vcf_fields(df, source):
+    if source == 'gatk':
+        column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'sample.GT', 'sample.GQ', 'sample.PL', 'sample.AD',
+                        'sample.DP']
+        assert df.columns.tolist() == column_check  # vcf df in unexpected format
 
-    column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'sample.GT', 'sample.GQ', 'sample.PL', 'sample.AD',
-                    'sample.DP']
-    assert df.columns.tolist() == column_check  # vcf df in unexpected format
+        # split allele depth column into reference allele count and alternate allele count columns
+        df[["RC", "AC"]] = df['sample.AD'].str.split(',', expand=True)[[0, 1]]
+        df = df.drop('sample.AD', axis=1)
 
-    # split allele depth column into reference allele count and alternate allele count columns
-    df[["RC", "AC"]] = df['sample.AD'].str.split(',', expand=True)[[0, 1]]
-    df = df.drop('sample.AD', axis=1)
+        df['Tool'] = 'GATK'
+
+    elif source == 'freebayes':
+        column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'sample.GT', 'sample.GQ', 'sample.PL', 'sample.DP',
+                        'sample.AD']
+        assert df.columns.tolist() == column_check  # vcf df in unexpected format
+
+        # split allele depth column into reference allele count and alternate allele count columns
+        df[["RC", "AC"]] = df['sample.AD'].str.split(',', expand=True)[[0, 1]]
+        df = df.drop('sample.AD', axis=1)
+
+        df['Tool'] = 'Freebayes'
+
+    elif source == 'snippy':
+        column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'snippy.GT', 'snippy.PL', 'snippy.DP', 'snippy.RO',
+                        'snippy.AO']
+        assert df.columns.tolist() == column_check  # vcf df in unexpected format
+
+        df['Tool'] = 'Snippy'
 
     df = df.rename(columns=format_cols_dict)
 
-    df['Error_prob'] = df['Qual'].apply(lambda x: get_error_probability(x))
-    df['Accuracy_prob'] = 1 - df['Error_prob']
-
-    # add in column labeling if SNPs are stringent or lenient:
-    df['Stringency'] = stringency
-
-    # reorder columns and drop composite_hits:
-    df = df[['Chrom', 'Pos', 'Ref', 'Alt', 'Qual', 'Error_prob', 'Accuracy_prob',
-             'GT', 'GQ', 'PL', 'DP', 'RC', 'AC', 'Stringency']]
+    df['error_prob'] = df['Qual'].apply(lambda x: get_error_probability(x))
+    df['accuracy_prob'] = 1 - df['error_prob']
 
     # returns vcf tsvs with common sense column names, and error and accuracy metric cols added in
     # any other columns worth adding??
@@ -729,8 +780,11 @@ def write_excel_file(df, filename):
     """
 
     dfs_to_write = {
-        'Stringent': df[df['Stringency'] == 'stringent'].drop(columns='Stringency').sort_values(by='Pos'),
-        'Lenient': df[df['Stringency'] == 'lenient'].drop(columns='Stringency').sort_values(by='Pos')
+        'Accuracy Prob > 0.75': df[df['accuracy_prob'] > 0.75].sort_values(by='Pos'),
+        'Accuracy Prob > 0.50': df[df['accuracy_prob'] > 0.50].sort_values(by='Pos'),
+        'Accuracy Prob > 0.25': df[df['accuracy_prob'] > 0.25].sort_values(by='Pos'),
+        'Accuracy Prob > 0.05': df[df['accuracy_prob'] > 0.05].sort_values(by='Pos'),
+        'All Possible SNPs': df.sort_values(by='Pos'),
                    }
 
     writer = pd.ExcelWriter(filename)
