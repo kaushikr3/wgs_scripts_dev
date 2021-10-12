@@ -46,7 +46,8 @@ def main():
 
     selected_features = pd.read_csv(f"~/wgs/metadata_wgs/{anno_genome.name}_selected_features.csv")
     selected_features_pr = pr.PyRanges(selected_features)
-    if args.lab_ref_csv_dir != None:
+    if args.lab_ref_csv_dir:
+        print("%%%%% Lab strains pulled in %%%%%")
         # print(args.lab_ref_csv_dir+'*.haploid.stringent.annotated.csv')
         stringent_lab_ref = pd.read_csv(
             glob.glob(os.path.join(args.lab_ref_csv_dir,'*haploid.stringent.annotated.csv'))[0])
@@ -269,14 +270,28 @@ def extract_features(row: pd.Series, selected_features_pr: pr.PyRanges) -> pd.Se
 
 def extract_intergenic(selected_features_pr: pr.PyRanges, pos_pr: pr.PyRanges) -> pd.Series:
     """Extracts information of neighbouring features given a genomic position"""
-    previous_gene = pos_pr.nearest(selected_features_pr, how='previous').df.drop(
-        columns=['Chromosome', 'Start_b', 'End_b', 'End'])
-    next_gene = pos_pr.nearest(selected_features_pr, how='next').df.drop(
-        columns=['Chromosome', 'Start_b', 'End_b', 'End'])
-    nearest = pd.concat([previous_gene, next_gene], axis=0)
+    #previous_gene = pos_pr.nearest(selected_features_pr, how='previous').df.drop(
+    #    columns=['Chromosome', 'Start_b', 'End_b', 'End'])
+    #next_gene = pos_pr.nearest(selected_features_pr, how='next').df.drop(
+    #    columns=['Chromosome', 'Start_b', 'End_b', 'End'])
+    previous_gene = pos_pr.nearest(selected_features_pr, how='previous').df
+    next_gene = pos_pr.nearest(selected_features_pr, how='next').df
+    if (len(previous_gene) > 0 ) and (len(next_gene) > 0 ):
+        nearest = pd.concat([
+            previous_gene[['Start', 'Feature_name', 'Feature_type', 'Strand', 'Distance']],
+            next_gene[['Start', 'Feature_name', 'Feature_type', 'Strand', 'Distance']]], axis=0)
+
+    elif len(previous_gene) > len(next_gene):
+        nearest = previous_gene[['Start', 'Feature_name', 'Feature_type', 'Strand', 'Distance']]
+
+    else:
+        nearest = next_gene[['Start', 'Feature_name', 'Feature_type', 'Strand', 'Distance']]
+
+    #print(nearest.columns)
     nearest['Location'] = 'Intergenic'
     nearest = nearest.groupby(['Location', 'Start'])[
         ['Feature_name', 'Feature_type', 'Distance']].agg(list).reset_index()
+    #print(nearest)
     return nearest[['Location', 'Feature_type', 'Feature_name', 'Distance']].T.squeeze()
 
 
@@ -293,8 +308,16 @@ def annotate_aa(row: pd.Series, selected_features_pr: pr.PyRanges, anno_genome: 
         return pd.Series(aa_columns)
     ref = row['Ref']
     alt = row['Alt']
+
+    if ',' in alt:
+        print("WARNING, unexpected character ',' detected at coordinate {}".format(row['Ref_pos']))
+        print("Full Alt value: ", alt)
+        print("Continuing forward with final entry in 'Alt' field")
+        alt = alt.split(',')[-1]
+    
     if len(ref) == len(alt):
         anno_position = int(float(row['Anno_position']))
+        #print(row)
         ref_protein, mut_protein = mutate_protein(
             anno_position, ref, alt, row['Feature_name'], selected_features_pr, anno_genome)
         aa_columns['AA_change'], aa_columns['Mutation_type'] = extract_missense(

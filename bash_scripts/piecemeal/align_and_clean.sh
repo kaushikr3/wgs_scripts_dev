@@ -20,7 +20,7 @@ if [[ ${#} -eq 0 ]]; then
    usage
 fi
 
-# Defauly directory, if none input:
+# Default directory, if none input:
 IN=fastq
 
 # Define list of arguments expected in the input

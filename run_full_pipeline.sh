@@ -47,8 +47,9 @@ echo "$NUM_CORES"
 ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/align_and_clean.sh -R "$REF_FA" -I "$IN_DIR" -N "$NUM_CORES"
 
 ## run variant callers
-~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_snv.sh -R "$REF_FA"
-~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_structural_variants.sh -R "$REF_FA"
+~wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_snv.sh -R "$REF_FA"
+
+~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/call_structural_variants.sh -R "$REF_FA" -N "$NUM_CORES"
 
 ## run vcf parsing
 ~/wgs/wgs_scripts_dev/bash_scripts/piecemeal/parse_vcf.sh -R "$REF_FA"

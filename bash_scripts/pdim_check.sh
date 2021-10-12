@@ -21,7 +21,8 @@ if [[ ${#} -eq 0 ]]; then
 fi
 
 # set default csv_dir value:
-CSV_DIR='csv'
+CSV_DIR='snp_xlsx'
+#CSV_DIR='csv'
 
 # Define list of arguments expected in the input
 optstring="R:S:C:"
@@ -45,16 +46,20 @@ mkdir cov
 
 echo "Generating Coverage Files"
 
-for f in bam/*dedup.bam
-	do
-			BASE=$(basename ${f})
-			bedtools genomecov -ibam "$f" -d > cov/${BASE/_dedup.bam/.cov}
-	done
-
+#for f in bam/*dedup.bam
+#	do
+#			BASE=$(basename ${f})
+#			echo "$BASE"
+#			bedtools genomecov -ibam "$f" -d > cov/${BASE/_dedup.bam/.cov}
+#	done
+#
 echo "Running pdim_check"
 
-python ~/wgs/wgs_scripts_dev/python_analysis_scripts/pdim_check.py \
-		-strain "$STRAIN" -stringency stringent -csv_dir "$CSV_DIR" -genome "$REF"
+python ~/wgs/wgs_scripts_dev/python_analysis_scripts/pdim_check_xlsx.py \
+		-strain "$STRAIN" -stringency Stringent -csv_dir "$CSV_DIR" -genome "$REF"
 
+#python ~/wgs/wgs_scripts_dev/python_analysis_scripts/pdim_check.py \
+#		-strain "$STRAIN" -stringency stringent -csv_dir "$CSV_DIR" -genome "$REF"
+#
 
 

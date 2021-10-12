@@ -12,7 +12,7 @@ spack load trimgalore
 # READ IN ARGUMENTS
 # usage:
 function usage {
-        echo "Usage: $(basename $0) [-I]" 2>&1
+        echo "Usage: $(basename $0) [-I] " 2>&1
         echo '   -I   path to data source directory; holds unmerged_fastq/ dir'
         exit 1
 }
@@ -39,6 +39,7 @@ done
 # DIRECTORY SETUP
 mkdir "$SOURCE_DIR"/merged_untrimmed
 mkdir "$SOURCE_DIR"/reports
+mkdir "$SOURCE_DIR"/fastq
 
 echo " ----  Processing fastq.gz files from ${SOURCE_DIR}  ----"
 
@@ -74,7 +75,7 @@ echo " ---- fastq.gz files merged ----  "
 for f in "$SOURCE_DIR"/merged_untrimmed/*R1_001.fastq.gz
 	do
 			echo "Running TrimGalore on:  ${f}  ${f/R1/R2}"
-			trim_galore --paired --output_dir "$SOURCE_DIR" \
+			trim_galore --paired -q 30 --output_dir "$SOURCE_DIR"/fastq \
 					--fastqc --fastqc_args "-t 4 --extract -o "$SOURCE_DIR"/reports" \
 					"${f}" "${f/R1/R2}"
 	done

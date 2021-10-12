@@ -10,35 +10,68 @@ from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 from Bio.Blast import NCBIXML
 
+### outside of env:
+# spack load /idhtq7g
+
 
 # paths to references files:
-genbank_dict = {
-    'H37Rv': '~/wgs/Reference/AL123456/AL123456.gbk',
-	'HN878': '~/wgs/Reference/NZ_CM001043/NZ_CM001043.gbk',
-    'Erdman': '~/wgs/Reference/Erdman/Erdman.gbk',
-    'Msmeg': '~/wgs/Reference/NC_008596/NC_008596.gb',
-    'BCG': '~/wgs/Reference/BCG_Pasteur/BCG_Pasteur.gb'
-    }
+if os.path.isdir('/home/nat4004'):
+    genbank_dict = {
+        'H37Rv': "/home/nat4004/wgs/Reference/AL123456/AL123456.gbk",
+    	'HN878': "/home/nat4004/wgs/Reference/NZ_CM001043/NZ_CM001043.gbk",
+        'Erdman': "/home/nat4004/wgs/Reference/Erdman/Erdman.gbk",
+        'Msmeg': "/home/nat4004/wgs/Reference/NC_008596/NC_008596.gb",
+        'BCG': "/home/nat4004/wgs/Reference/BCG_Pasteur/BCG_Pasteur.gb"
+        }
+    
+    
+    fasta_dict = {
+        'H37Rv': "/home/nat4004/wgs/Reference/AL123456/AL123456.fasta",
+    	'H37RvCO': "/home/nat4004/wgs/Reference/H37RvCO/H37RvCO.fasta",
+    	'HN878': "/home/nat4004/wgs/Reference/NZ_CM001043/NZ_CM001043.fasta",
+        'Erdman': "/home/nat4004/wgs/Reference/Erdman/Erdman.fasta",
+        'Msmeg': "/home/nat4004/wgs/Reference/NC_008596/NC_008596.fasta",
+        'BCG': "/home/nat4004/wgs/Reference/BCG_Pasteur/BCG_Pasteur.fa"
+        }
+    
+    
+    lab_reference_dict = {
+        'North': "/home/nat4004/wgs/Reference/Lab_references/H37Rv_Jamie_North/csv/",
+        'UMass': "/home/nat4004/wgs/Reference/Lab_references/H37Rv_Caro_UMass/csv/",
+    	'HN878': "/home/nat4004/wgs/Reference/Lab_references/HN878_ref_Jamie/csv/",
+        'Erdman': "/home/nat4004/wgs/Reference/Lab_references/Erdman_Caro/csv/",
+        'BCG': "/home/nat4004/wgs/Reference/Lab_references/BCG_WT_Josh/csv/"
+        }
+
+else:
+    genbank_dict = {
+        'H37Rv': '~/wgs/Reference/AL123456/AL123456.gbk',
+    	'HN878': '~/wgs/Reference/NZ_CM001043/NZ_CM001043.gbk',
+        'Erdman': '~/wgs/Reference/Erdman/Erdman.gbk',
+        'Msmeg': '~/wgs/Reference/NC_008596/NC_008596.gb',
+        'BCG': '~/wgs/Reference/BCG_Pasteur/BCG_Pasteur.gb'
+        }
+    
+    
+    fasta_dict = {
+        'H37Rv': '~/wgs/Reference/AL123456/AL123456.fasta',
+    	'H37RvCO': '~/wgs/Reference/H37RvCO/H37RvCO.fasta',
+    	'HN878': '~/wgs/Reference/NZ_CM001043/NZ_CM001043.fasta',
+        'Erdman': '~/wgs/Reference/Erdman/Erdman.fasta',
+        'Msmeg': '~/wgs/Reference/NC_008596/NC_008596.fasta',
+        'BCG': '~/wgs/Reference/BCG_Pasteur/BCG_Pasteur.fa'
+        }
+    
+    
+    lab_reference_dict = {
+        'North': '~/wgs/Reference/Lab_references/H37Rv_Jamie_North/csv/',
+        'UMass': '~/wgs/Reference/Lab_references/H37Rv_Caro_UMass/csv/',
+    	'HN878': '~/wgs/Reference/Lab_references/HN878_ref_Jamie/csv/',
+        'Erdman': '~/wgs/Reference/Lab_references/Erdman_Caro/csv/',
+        'BCG': '~/wgs/Reference/Lab_references/BCG_WT_Josh/csv/'
+        }
 
 
-fasta_dict = {
-    'H37Rv': '~/wgs/Reference/AL123456/AL123456.fasta',
-	'H37RvCO': '~/wgs/Reference/H37RvCO/H37RvCO.fasta',
-	'HN878': '~/wgs/Reference/NZ_CM001043/NZ_CM001043.fasta',
-    'Erdman': '~/wgs/Reference/Erdman/Erdman.fasta',
-    'Msmeg': '~/wgs/Reference/NC_008596/NC_008596.fasta',
-    'BCG': '~/wgs/Reference/BCG_Pasteur/BCG_Pasteur.fa'
-    }
-
-
-lab_reference_dict = {
-    'North': '~/wgs/Reference/Lab_references/H37Rv_Jamie_North/csv/',
-    'UMass': '~/wgs/Reference/Lab_references/H37Rv_Caro_UMass/csv/',
-	'HN878': '~/wgs/Reference/Lab_references/HN878_ref_Jamie/csv/',
-    'Erdman': '~/wgs/Reference/Lab_references/Erdman_Caro/csv/',
-    'BCG': '~/wgs/Reference/Lab_references/BCG_WT_Josh/csv/'
-    }
-#
 # genbank_dict = {
 #     'H37Rv': 'reference_files/AL123456.gbk',
 #                 # 'Erdman':
@@ -105,9 +138,13 @@ def main():
     if args.h37rv_homology or args.ref_strain == 'H37Rv':
         os.system(f"mkdir {args.blast_dir}")
 
-    files = [f for f in os.listdir(args.vcf_dir) if os.path.isfile(os.path.join(args.vcf_dir, f))]
-    samples = pd.Series(files).str.split('.', expand=True
-                                         )[0].str.rstrip('freebayes').str.rstrip('gatk').str.rstrip('_').unique()
+    freebayes = pd.Series([f for f in os.listdir(os.path.join(args.vcf_dir, 'freebayes')) 
+    		                       if os.path.isfile(os.path.join(args.vcf_dir, 'freebayes', f))])
+    
+    gatk = pd.Series([f for f in os.listdir(os.path.join(args.vcf_dir, 'gatk')) 
+    		                  if os.path.isfile(os.path.join(args.vcf_dir, 'gatk', f))])
+    
+    samples = pd.Series(freebayes).str.split('.', expand=True)[0].str.rstrip('freebayes').str.rstrip('_').unique()
 
     for sample in samples:
         print("Running sample: ", sample)
@@ -115,20 +152,20 @@ def main():
         blast_sub_dir = None
 
         if args.h37rv_homology or args.ref_strain == 'H37Rv':
-            blast_sub_dir = os.path.join(args.blast_dir, sample)
-            os.system(f"mkdir {blast_sub_dir}")
+            blast_sub_dir = args.blast_dir
+            #blast_sub_dir = os.path.join(args.blast_dir, sample)
+            #os.system(f"mkdir {blast_sub_dir}")
 
-        for file in files:
-            if sample in file:
-                # add gatk files
-                if 'haploid' in file:
-                    vcf_dict.update({"gatk_haploid": os.path.join(args.vcf_dir, file)})
-                elif 'diploid' in file:
-                    vcf_dict.update({"gatk_diploid": os.path.join(args.vcf_dir, file)})
-                elif 'freebayes' in file:
-                    vcf_dict.update({"freebayes": os.path.join(args.vcf_dir, file)})
+        freebayes_tsv = freebayes[freebayes.str.contains(sample)].item()
+        gatk_haploid_tsv = gatk[gatk.str.contains("{}.+haploid".format(sample))].item()
+        gatk_diploid_tsv = gatk[gatk.str.contains("{}.+diploid".format(sample))].item()
+        
+        vcf_dict.update({'freebayes': os.path.join(args.vcf_dir, 'freebayes', freebayes_tsv)})
+        vcf_dict.update({'gatk_haploid': os.path.join(args.vcf_dir, 'gatk', gatk_haploid_tsv)})
+        vcf_dict.update({'gatk_diploid': os.path.join(args.vcf_dir, 'gatk', gatk_diploid_tsv)})
 
         print(vcf_dict)
+
         df = get_full_annotated_csv(vcf_dict['gatk_haploid'], vcf_dict['gatk_diploid'], vcf_dict['freebayes'],
                                     args.ref_strain, args.h37rv_homology, blast_sub_dir, args.lab_strain)
 
@@ -160,7 +197,7 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, f
 
     # add SNP_tool, accuracy and error columns, and rename columns
     hgatk = format_vcf_fields(hgatk, 'gatk')
-    dgatk = format_vcf_fields(dgatk, 'gatk')
+    dgatk = format_vcf_fields(dgatk, 'gatk', 'diploid')
     free = format_vcf_fields(free, 'freebayes')
 
     # merge SNP sets from different sources together:
@@ -320,22 +357,26 @@ def get_error_probability(quality):
     return error
 
 
-def format_vcf_fields(df, source):
+def format_vcf_fields(df, source, stringency=None):
     if source == 'gatk':
         column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'sample.GT', 'sample.GQ', 'sample.PL', 'sample.AD',
                         'sample.DP']
-        assert df.columns.tolist() == column_check  # vcf df in unexpected format
+        #assert df.columns.tolist() == column_check  # vcf df in unexpected format
 
         # split allele depth column into reference allele count and alternate allele count columns
         df[["RC", "AC"]] = df['sample.AD'].str.split(',', expand=True)[[0, 1]]
         df = df.drop('sample.AD', axis=1)
 
-        df['Tool'] = 'GATK'
+        if stringency == "diploid":
+            df['Tool'] = 'GATK(lenient)'
+        
+        else: 
+            df['Tool'] = 'GATK'
 
     elif source == 'freebayes':
         column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'sample.GT', 'sample.GQ', 'sample.PL', 'sample.DP',
                         'sample.AD']
-        assert df.columns.tolist() == column_check  # vcf df in unexpected format
+        #assert df.columns.tolist() == column_check  # vcf df in unexpected format
 
         # split allele depth column into reference allele count and alternate allele count columns
         df[["RC", "AC"]] = df['sample.AD'].str.split(',', expand=True)[[0, 1]]
@@ -346,7 +387,7 @@ def format_vcf_fields(df, source):
     elif source == 'snippy':
         column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'snippy.GT', 'snippy.PL', 'snippy.DP', 'snippy.RO',
                         'snippy.AO']
-        assert df.columns.tolist() == column_check  # vcf df in unexpected format
+        #assert df.columns.tolist() == column_check  # vcf df in unexpected format
 
         df['Tool'] = 'Snippy'
 
@@ -780,11 +821,9 @@ def write_excel_file(df, filename):
     """
 
     dfs_to_write = {
-        'Accuracy Prob > 0.75': df[df['accuracy_prob'] > 0.75].sort_values(by='Pos'),
-        'Accuracy Prob > 0.50': df[df['accuracy_prob'] > 0.50].sort_values(by='Pos'),
-        'Accuracy Prob > 0.25': df[df['accuracy_prob'] > 0.25].sort_values(by='Pos'),
-        'Accuracy Prob > 0.05': df[df['accuracy_prob'] > 0.05].sort_values(by='Pos'),
-        'All Possible SNPs': df.sort_values(by='Pos'),
+        'Stringent': df[df['Accuracy_prob'] = 1].sort_values(by='Pos'),
+        'Moderate': df[df['Accuracy_prob'] > 0.98].sort_values(by='Pos'),
+        'Lenient': df[df['Accuracy_prob'] > 0.85].sort_values(by='Pos'),
                    }
 
     writer = pd.ExcelWriter(filename)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # DEPENDENCIES:
-#spack load /cjzfz7f  # loads python-2.7.15
+spack load /cjzfz7f  # loads python-2.7.15
 
 function usage {
         echo "Usage: $(basename $0) [-R] -[N]" 2>&1
@@ -46,7 +46,7 @@ mkdir pilon
 #        --referenceFasta "$REF" \
 #        --runDir manta/"${BASE/_dedup.bam/}"
 #
-#    manta/"${BASE/_dedup.bam/}"/runWorkflow.py -j "$NUM_CORES"
+#    manta/"${BASE/_dedup.bam/}"/runWorkflow.py 
 #
 #  done
 #
@@ -65,11 +65,11 @@ for f in bam/*dedup.bam
       --variant --tracks --nostrays 
 	
 	# copy and rename pilon.vcf files
-    cp pilon/"${BASE/_dedup.bam}"/pilon.vcf pilon/"${BASE/_dedup.bam/_pilon.vcf}"
+    #cp pilon/"${BASE/_dedup.bam}"/pilon.vcf pilon/"${BASE/_dedup.bam/_pilon.vcf}"
 
   done
 
 
-## run CNGpro
-
-
+### run CNGpro
+#
+#

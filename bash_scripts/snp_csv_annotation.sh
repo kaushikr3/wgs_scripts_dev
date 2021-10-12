@@ -52,22 +52,12 @@ done
 mkdir csv_old
 mkdir blast
 
-for f in gatk/*haploid.vcf
-	do
- 			echo " ----- Running vcf_to_csv on ${f} and ${f/haploid/diploid}----------"
 
-			python ~/wgs/wgs_scripts_dev/python_analysis_scripts/vcf_to_csv.py \
-					-vcf "$f" \
-					-ref_genome "$REF" -anno_genome "$ANNO" \
-					-lab_ref_csv_dir "$LAB" \
-					-csv_main_dir csv_old -blast_main_dir_name blast
-			
-			python ~/wgs/wgs_scripts_dev/python_analysis_scripts/vcf_to_csv.py \
-					-vcf "${f/haploid/diploid}" \
-					-ref_genome "$REF" -anno_genome "$ANNO" \
-					-lab_ref_csv_dir "$LAB" \
-					-csv_main_dir csv_old -blast_main_dir_name blast
-			
-	done
-
+python ~/wgs/wgs_scripts_dev/python_analysis_scripts/snp_csv_annotation.py \
+		-ref_strain BCG \
+		--H37Rv \
+		-blast blast \
+		-lab_strain BCG \
+		-vcf vcf_parse/ \
+		-out csv_test_out
 
