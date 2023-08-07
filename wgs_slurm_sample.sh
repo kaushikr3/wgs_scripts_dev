@@ -18,9 +18,15 @@ echo "CPUS per task assigned:" "$SLURM_CPUS_PER_TASK" >> slurm_output.log
 echo "Running on cluster:" $SLURM_CLUSTER_NAME >> slurm_output.log
 echo "This job was assigned the temporary (local) directory:" $TMPDIR >> slurm_output.log
 
+
+## VARIABLES TO SET RUN-WISE::
 IN_DIR=/athena/schnappingerlab/scratch/nat4004/AN00012283/trimmed_fastq
 REF_FA=~/wgs/Reference/H37RvCO/H37RvCO.fasta
 REF_GB=~/wgs/Reference/H37RvCO/H37RvCO.gbk
+
+Ref_strain=H37Rv
+Lab_strain=UMass
+PDIM_strain=H37RvCO
 
 FILELIST=filelist
 BAMLIST=bamlist
@@ -41,11 +47,9 @@ sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv_specific.sh -R "$REF_FA" -F "$BAM
 spack unload samtools@1.9%gcc@6.3.0
 spack unload bwa@0.7.15%gcc@6.3.0
 
-
 ## set everything up for running snp_csv_annotation.py script:
 spack load blast-plus@2.10.0
 export PATH="${python_path}:${PATH}"
-
 
 echo "%%% PRINTING PATH"
 echo $PATH
@@ -59,15 +63,15 @@ mkdir snp_xlsx
 mkdir blast
 
 python ~/wgs/wgs_scripts_dev/python_analysis_scripts/snp_csv_annotation.py \
-	   	-ref_strain H37Rv \
+	   	-ref_strain "$Ref_strain" \
 		--H37Rv \
 		-blast blast \
-		-lab_strain UMass \
+		-lab_strain "$Lab_strain" \
 		-vcf vcf_parse \
 		-out snp_xlsx
 
 sh ~/wgs/wgs_scripts_dev/bash_scripts/pdim_check.sh \
-		-S H37RvCO \
+		-S "$PDIM_strain" \
 		-R $REF_GB \
 		-C snp_xlsx
 

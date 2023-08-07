@@ -131,3 +131,5 @@ for f in bam/*dedup.bam
 
 
 spack unload picard
+
+
