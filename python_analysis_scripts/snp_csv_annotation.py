@@ -131,7 +131,7 @@ def main():
                        help='Path to directory to write blast files into')
 
     parse.add_argument('-lab_strain', required=False, dest='lab_strain', type=str, nargs='?', default=False, 
-                       choices={'North', 'UMass', 'Erdman', 'HN878', 'BCG'},
+                       choices={'North', 'UMass', 'Erdman', 'HN878', 'BCG', None},
                        help='(Optional) Name of lab reference strain to add to annotation, if desired')
 
     parse.add_argument('-vcf', required=True, dest='vcf_dir', type=str,
