@@ -19,9 +19,10 @@ spack load fastqc
 spack load -r py-cutadapt@1.13
 spack load trimgalore
 
+filelist=raw_fastq_list
 out_dir=trimmed_fastq
-filelist=raw_fastq_list3c
 
+mkdir "$out_dir"
 
 while read f 
 	do
