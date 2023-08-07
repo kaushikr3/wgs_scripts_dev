@@ -14,8 +14,9 @@
 # usage:
 
 function usage {
-        echo "Usage: $(basename $0) [-R]" 2>&1
+        echo "Usage: $(basename $0) [-R] [-F]" 2>&1
         echo '   -R   path to reference_genome.fa'
+        echo '   -F   path to file holding sample names to parse'
         exit 1
 }
 
@@ -24,11 +25,12 @@ if [[ ${#} -eq 0 ]]; then
 fi
 
 # Define list of arguments expected in the input
-optstring="R:"
+optstring="R:F:"
 
 while getopts ${optstring} arg; do
   case "${arg}" in
     R) REF="${OPTARG}" ;;
+    F) file_list="${OPTARG}" ;;
 
     ?)
       echo "Invalid option: -${OPTARG}."
@@ -45,31 +47,32 @@ mkdir vcf_parse
 
 echo "Parsing gatk VCFs" 
 
-for f in gatk/*gatk.haploid.vcf
+#for f in gatk/*gatk.haploid.vcf
+while read i
 do 
-		BASE=$(basename ${f})	
-
+		#BASE=$(basename ${f})	
 		#vcfleftalign -r "$REF" "$f" > "${f/.vcf/.leftalign.vcf}"
-		
 		#~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "${f/.vcf/.leftalign.vcf}" \
-		~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "$f" \
+
+		~/biotools/gatk-4.2.0.0/gatk VariantsToTable \
+				-V gatk/"$i" \
 				-F CHROM -F POS -F REF -F ALT -F QUAL \
 				-GF GT -GF GQ -GF PL -GF AD -GF DP \
-				-O vcf_parse/"${BASE/.vcf/.tsv}"
+				-O vcf_parse/"${i/.vcf/.tsv}"
 
-done
+done < $file_list
 
-for f in gatk/*gatk.diploid.vcf
+while read i
 do 
-		BASE=$(basename ${f})	
-
+		#BASE=$(basename ${f})	
 		#vcfleftalign -r "$REF" "$f" > "${f/.vcf/.leftalign.vcf}"
-		
 		#~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "${f/.vcf/.leftalign.vcf}" \
-		~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "$f" \
+
+		~/biotools/gatk-4.2.0.0/gatk VariantsToTable \
+				-V gatk/"$i" \
 				-F CHROM -F POS -F REF -F ALT -F QUAL \
 				-GF GT -GF GQ -GF PL -GF AD -GF DP \
-				-O vcf_parse/"${BASE/.vcf/.tsv}"
+				-O vcf_parse/"${i/.vcf/.tsv}"
 
 done
 

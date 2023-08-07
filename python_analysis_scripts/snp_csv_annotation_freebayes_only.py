@@ -144,8 +144,8 @@ def main():
     #freebayes = pd.Series([f for f in os.listdir(os.path.join(args.vcf_dir, 'freebayes')) 
     #		                       if os.path.isfile(os.path.join(args.vcf_dir, 'freebayes', f))])
     
-    gatk = pd.Series([f for f in os.listdir(os.path.join(args.vcf_dir, 'gatk')) 
-    		                  if os.path.isfile(os.path.join(args.vcf_dir, 'gatk', f))])
+    #gatk = pd.Series([f for f in os.listdir(os.path.join(args.vcf_dir, 'gatk')) 
+    #		                  if os.path.isfile(os.path.join(args.vcf_dir, 'gatk', f))])
     
     samples = pd.Series(freebayes).str.split('.', expand=True)[0].str.rstrip('freebayes').str.rstrip('_').unique()
 
@@ -160,29 +160,27 @@ def main():
             #os.system(f"mkdir {blast_sub_dir}")
 
         freebayes_tsv = freebayes[freebayes.str.contains(sample)].item()
-        gatk_haploid_tsv = gatk[gatk.str.contains("{}.+haploid".format(sample))].item()
-        gatk_diploid_tsv = gatk[gatk.str.contains("{}.+diploid".format(sample))].item()
+        #gatk_haploid_tsv = gatk[gatk.str.contains("{}.+haploid".format(sample))].item()
+        #gatk_diploid_tsv = gatk[gatk.str.contains("{}.+diploid".format(sample))].item()
         
         #vcf_dict.update({'freebayes': os.path.join(args.vcf_dir, 'freebayes', freebayes_tsv)})
         vcf_dict.update({'freebayes': os.path.join('freebayes', freebayes_tsv)})
-        vcf_dict.update({'gatk_haploid': os.path.join(args.vcf_dir, 'gatk', gatk_haploid_tsv)})
-        vcf_dict.update({'gatk_diploid': os.path.join(args.vcf_dir, 'gatk', gatk_diploid_tsv)})
+        #vcf_dict.update({'gatk_haploid': os.path.join(args.vcf_dir, 'gatk', gatk_haploid_tsv)})
+        #vcf_dict.update({'gatk_diploid': os.path.join(args.vcf_dir, 'gatk', gatk_diploid_tsv)})
 
         print(vcf_dict)
 
-        df = get_full_annotated_csv(vcf_dict['gatk_haploid'], vcf_dict['gatk_diploid'], vcf_dict['freebayes'],
+        df = get_full_annotated_csv(vcf_dict['freebayes'],
                                     args.ref_strain, args.h37rv_homology, blast_sub_dir, args.lab_strain)
 
         write_excel_file(df, os.path.join(args.out, sample + "_SNP.xlsx"))
 
 
-def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, freebayes_parsed_path,
+def get_full_annotated_csv(freebayes_parsed_path,
                            reference_strain, h37rv_homology=False, blast_dir=None, lab_strain=None):
     """
     Generates fully annotated SNP df with reference annotation, H37Rv homology, and lab strain intersection
 
-    :param gatk_haploid_parsed_path: Path to gatk haploid/stringent parsed vcf file
-    :param gatk_diploid_parsed_path: Path to gatk diplid/lenient parsed vcf file
     :param freebayes_parsed_path: Path to freebayes parsed vcf file
     :param reference_strain: Name of reference strain (strain aligned against -- list H37Rv NOT H37RvCO)
     :param h37rv_homology: Whether to generate and return H37Rv homology data (only used for non-H37Rv samples)
@@ -195,17 +193,14 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path, f
     ref_genbank = SeqIO.read(genbank_dict[reference_strain], "genbank")
 
     # open SNPs
-    hgatk = pd.read_csv(gatk_haploid_parsed_path, delimiter='\t')
-    dgatk = pd.read_csv(gatk_diploid_parsed_path, delimiter='\t')
     free = pd.read_csv(freebayes_parsed_path, delimiter='\t')
 
     # add SNP_tool, accuracy and error columns, and rename columns
-    hgatk = format_vcf_fields(hgatk, 'gatk')
-    dgatk = format_vcf_fields(dgatk, 'gatk', 'diploid')
-    free = format_vcf_fields(free, 'freebayes')
+    #free = format_vcf_fields(free, 'freebayes')
+    df = format_vcf_fields(free, 'freebayes')
 
     # merge SNP sets from different sources together:
-    df = merge_vcf_dfs(hgatk, dgatk, free)
+    #df = merge_vcf_dfs(hgatk, dgatk, free)
 
     print(df.columns)
 

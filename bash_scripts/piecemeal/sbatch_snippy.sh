@@ -44,9 +44,9 @@ echo "Left aligning and parsing snippy VCFs"
 for f in snippy/*.filt.vcf
 do
 		BASE=$(basename ${f})
-		vcfleftalign -r "$R" "$f" > "${f/.vcf/.leftalign.vcf}"
+		#vcfleftalign -r "$R" "$f" > "${f/.vcf/.leftalign.vcf}"
 		
-		~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "${f/.vcf/.leftalign.vcf}" \
+		~/biotools/gatk-4.2.0.0/gatk VariantsToTable -V "$f" \
 				-F CHROM -F POS -F REF -F ALT -F QUAL -F AC -F AF -F QD \
 				-GF AD -GF DP -GF GQ -GF GT -GF PL \
 				-O vcf_parse/"${BASE/.vcf/_snippy.tsv}"

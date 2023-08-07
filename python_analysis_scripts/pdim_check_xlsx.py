@@ -15,8 +15,8 @@ pd.set_option('mode.chained_assignment', None)
 
 def main():
     my_parser = argparse.ArgumentParser(prog='pdim_check')
-    my_parser.add_argument('-strain', required=True,
-                           dest='strain', choices={'H37RvCO', 'HN878', 'Erdman', 'BCG', 'AL123456'},
+    my_parser.add_argument('-strain', required=True, dest='strain', 
+                           choices={'H37RvCO', 'HN878', 'Erdman', 'BCG', 'AL123456', 'NC_000962'},
                            type=str)
     my_parser.add_argument('-stringency', required=True,
                            dest='stringency', choices={'Lenient', 'Stringent'}, type=str)
@@ -30,7 +30,8 @@ def main():
     args = my_parser.parse_args()
 
     names = [Path(x).stem for x in glob.glob(f'./{args.cov_dir}/*.cov')]
-    pdim_range = pd.read_csv('~/wgs/metadata_wgs/PDIM_locations.csv')
+    #pdim_range = pd.read_csv('~/wgs/metadata_wgs/PDIM_locations.csv')
+    pdim_range = pd.read_csv('~/wgs/metadata_wgs/PDIM_locations_new.csv')
     # pdim_features = pd.read_csv(
     #     f'./../../../Scripts/metadata/PDIM_{args.strain}_features.csv')
     covs = [pd.read_csv(f'{args.cov_dir}/{name}.cov', header=None,

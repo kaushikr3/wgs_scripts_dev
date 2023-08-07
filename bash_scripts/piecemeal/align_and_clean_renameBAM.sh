@@ -46,36 +46,27 @@ mkdir reports
 
 echo " ----  Aligning files against ref: ${REF} ----"
 
-CT1_IGO_07548_B_2_S63_L008_R1_001.fastq.gz
-CT1_IGO_07548_B_2_S63_L008_R2_001.fastq.gz
 
 # ALIGNMENT:
-#for f in "$IN"/*R1_001.fastq.gz
+#for f in "$IN"/*R1_001_val_1.fq.gz
 #for f in "$IN"/*1_val_1.fq.gz
-
-for f in "$IN"/*R1_001_val_1.fq.gz
-	do
-
-			#echo "Aligning ${f} and ${f/R1_001/R2_001} with BWA MEM" 
-			echo "Aligning ${f} and ${f/R1_001_val_1/R2_001_val_2} with BWA MEM" 
-			#echo "Aligning ${f} and ${f/1_val_1/2_val_2} with BWA MEM" 
-
-			OUTNAME=$(basename ${f})
-
-			#bwa mem -M -t "$NUM_CORES" "$REF" "$f" "${f/R1_001/R2_001}" | \
-			#    samtools view -Shb - > bam/"${OUTNAME/R1_001.fastq.gz/unsorted.bam}"
-
-			bwa mem -M -t "$NUM_CORES" "$REF" "$f" "${f/R1_001_val_1/R2_001_val_2}" | \
-			    samtools view -Shb - > bam/"${OUTNAME/R1_001_val_1.fq.gz/unsorted.bam}"
-
-			#bwa mem -M -t "$NUM_CORES" "$REF" "$f" "${f/1_val_1/2_val_2}" | \
-			#    samtools view -Shb - > bam/"${OUTNAME/1_val_1.fq.gz/unsorted.bam}"
-
-	done
+#	do
+#
+#			#echo "Aligning ${f} and ${f/R1_001_val_1/R2_001_val_2} with BWA MEM" 
+#			echo "Aligning ${f} and ${f/1_val_1/2_val_2} with BWA MEM" 
+#			OUTNAME=$(basename ${f})
+#
+#			#bwa mem -M -t "$NUM_CORES" "$REF" "$f" "${f/R1_001_val_1/R2_001_val_2}" | \
+#			#    samtools view -Shb - > bam/"${OUTNAME/R1_001_val_1.fq.gz/unsorted.bam}"
+#
+#			bwa mem -M -t "$NUM_CORES" "$REF" "$f" "${f/1_val_1/2_val_2}" | \
+#			    samtools view -Shb - > bam/"${OUTNAME/1_val_1.fq.gz/unsorted.bam}"
+#
+#	done
 
 
 # PICARD TOOLS
-for f in bam/*unsorted.bam
+for f in bam2/*unsorted.bam
 	do
 			echo "Cleaning and sorting ${f} " 
 			BASE=$(basename ${f})
@@ -108,20 +99,18 @@ for f in bam/*unsorted.bam
 					METRICS_FILE=reports/"${BASE/unsorted.bam/dedup.metrics.txt}" \
 					ASSUME_SORTED=true
 	
-			# index bam
-			samtools index "${f/unsorted/dedup}"
 
 	done
 
 
-# EVAL BAMS
-for f in bam/*dedup.bam
+# INDEX AND EVAL BAMS
+for f in bam2/*dedup.bam
 	do
 
-			echo "Running flagstat ##################"
+			echo "Indexing ##################"
 			echo "BAM  ${f}" >> reports/samtools_stats.log
 			
-			#samtools index "${f/unsorted/dedup}" &
+			samtools index "${f/unsorted/dedup}" &
 			samtools flagstat "$f" >> reports/samtools_stats.log
 
 			echo %%%%%%%%%%%%%%% >> reports/samtools_stats.log

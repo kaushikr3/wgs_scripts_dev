@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s nullglob
+
 # DEPENDENCIES:
 # fastqc
 # trimgalore
@@ -30,10 +32,11 @@ echo " ----  Trimming and Running QC  ----"
 #
 
 # TRIM AND GENERATE TRIMMED FASTQC
-for f in fastq/merged_untrimmed/*R1_001.fastq.gz
+#for f in fastq/merged_untrimmed/*R1_001.fastq.gz
+for f in raw_fastq/*R1.fastq.gz
 	do
 			echo "Running TrimGalore on:  ${f}  ${f/R1/R2}"
-			trim_galore --paired --output_dir fastq \
+			trim_galore --paired --output_dir trimmed_fastq \
 					"${f}" "${f/R1/R2}"
 					#--fastqc --fastqc_args "-t 2 --extract -o reports/fastqc_trimmed_out" \
 	done

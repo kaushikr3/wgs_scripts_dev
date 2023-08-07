@@ -1,0 +1,8 @@
+slurmstepd: error: task/cgroup: unable to add task[pid=18136] to memory cg '(null)'
+/var/spool/slurmd/job8489926/slurm_script: illegal option -- G
+Invalid option: -.
+
+Usage: slurm_script [-R] [-I] [-N]
+   -R   path to reference_genome.fa
+   -I   path to trimmed fastq directory
+   -N   number of processors available

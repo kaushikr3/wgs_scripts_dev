@@ -55,13 +55,18 @@ for f in bam/*dedup.bam
 				   	-R "$REF" -I "$f" \
 				   	-O gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
 
-#			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.haploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.haploid.vcf}"
-#			bcftools filter -O v -e 'INFO/DP<=5' -o gatk/"${BASE/dedup.bam/gatk.diploid.filt.vcf}" gatk/"${BASE/dedup.bam/gatk.diploid.vcf}"
 	done
 
 
-## FREEBAYES
-##
+# FREEBAYES
+#
+#BASE=JW_12_
+#
+#~/biotools/freebayes-1.3.4-linux-static-AMD64 -f "$REF" --ploidy 1 bam/"$BASE"dedup.bam | bcftools filter \
+#		-O v -e 'DP<=5' -e '%QUAL<20' -e 'SAF == 0 || SAR == 0' \
+#		-o freebayes/"$BASE"freebayes.filt.vcf -
+#
+#
 #for f in bam/*dedup.bam
 #do
 #	   	echo "Running freebayes on ${f}" 

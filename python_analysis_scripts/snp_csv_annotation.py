@@ -16,9 +16,13 @@ from Bio.Blast import NCBIXML
 
 # paths to references files:
 if os.path.isdir('/home/nat4004'):
+    print('PATH 1')
     genbank_dict = {
         'H37Rv': "/home/nat4004/wgs/Reference/AL123456/AL123456.gbk",
+		'NC_000962': "/home/nat4004/wgs/Reference/NC_000962/NC_000962.gb",
         'AL123456': "/home/nat4004/wgs/Reference/AL123456/AL123456.gbk",
+    	'HN878': "/home/nat4004/wgs/Reference/NZ_CM001043/NZ_CM001043.gbk",
+        'H37RvMA': "/home/nat4004/wgs/Reference/H37RvMA/H37RvMA.gbk",
     	'HN878': "/home/nat4004/wgs/Reference/NZ_CM001043/NZ_CM001043.gbk",
         'Erdman': "/home/nat4004/wgs/Reference/Erdman/Erdman.gbk",
         'Msmeg': "/home/nat4004/wgs/Reference/NC_008596/NC_008596.gb",
@@ -28,8 +32,10 @@ if os.path.isdir('/home/nat4004'):
     
     fasta_dict = {
         'H37Rv': "/home/nat4004/wgs/Reference/AL123456/AL123456.fasta",
+		'NC_000962': "/home/nat4004/wgs/Reference/NC_000962/NC_000962.fasta",
         'AL123456': "/home/nat4004/wgs/Reference/AL123456/AL123456.fasta",
     	'H37RvCO': "/home/nat4004/wgs/Reference/H37RvCO/H37RvCO.fasta",
+		'H37RvMA': "/home/nat4004/wgs/Reference/H37RvMA/H37RvMA.fasta",
     	'HN878': "/home/nat4004/wgs/Reference/NZ_CM001043/NZ_CM001043.fasta",
         'Erdman': "/home/nat4004/wgs/Reference/Erdman/Erdman.fasta",
         'Msmeg': "/home/nat4004/wgs/Reference/NC_008596/NC_008596.fasta",
@@ -46,18 +52,20 @@ if os.path.isdir('/home/nat4004'):
         }
 
 else:
+    print('PATH 2')
     genbank_dict = {
         'H37Rv': "~/wgs/Reference/AL123456/AL123456.gbk",
     	'HN878': "~/wgs/Reference/NZ_CM001043/NZ_CM001043.gbk",
+        'H37RvMA': "~/wgs/Reference/H37RvMA/H37RvMA.gbk",
         'Erdman': "~/wgs/Reference/Erdman/Erdman.gbk",
         'Msmeg': "~/wgs/Reference/NC_008596/NC_008596.gb",
         'BCG': "~/wgs/Reference/BCG_Pasteur/BCG_Pasteur.gb"
         }
     
-    
     fasta_dict = {
         'H37Rv': "~/wgs/Reference/AL123456/AL123456.fasta",
     	'H37RvCO': "~/wgs/Reference/H37RvCO/H37RvCO.fasta",
+		'H37RvMA': "~/wgs/Reference/H37RvMA/H37RvMA.fasta",
     	'HN878': "~/wgs/Reference/NZ_CM001043/NZ_CM001043.fasta",
         'Erdman': "~/wgs/Reference/Erdman/Erdman.fasta",
         'Msmeg': "~/wgs/Reference/NC_008596/NC_008596.fasta",
@@ -115,7 +123,7 @@ def main():
     parse = argparse.ArgumentParser(prog='SNP_annotation')
 
     parse.add_argument('-ref_strain', required=True, dest='ref_strain', type=str, 
-                       choices={'H37Rv', 'Erdman', 'HN878', 'BCG', 'Msmeg', 'AL123456', 'recombinant'},
+                       choices={'H37Rv', 'Erdman', 'HN878', 'BCG', 'Msmeg', 'AL123456', 'H37RvMA', 'NC_000962', 'recombinant'},
                        help='Name of reference strain used in alignemnt (H37Rv if H37RvCO used')
 
     parse.add_argument('-recombinant_ref', required=False, dest='recombinant_fa', type=str, nargs='?', default=False,
@@ -152,7 +160,8 @@ def main():
         os.system("mkdir {}".format(args.blast_dir))
 
     files = pd.Series([f for f in os.listdir(args.vcf_dir) if os.path.isfile(os.path.join(args.vcf_dir, f))])
-    samples = files.str.split('.', expand=True)[0].str.rstrip('gatk').str.rstrip('_').unique()
+    samples = files.str.split('.', expand=True)[0].str.rstrip('gatk').unique()
+    #samples = files.str.split('.', expand=True)[0].str.rstrip('gatk').str.rstrip('_').unique()
 
     for sample in samples:
         print("Running sample: ", sample)
@@ -163,6 +172,8 @@ def main():
             blast_sub_dir = args.blast_dir
         #    blast_sub_dir = os.path.join(args.blast_dir, sample)
         #    os.system(f"mkdir {blast_sub_dir}")
+
+        print(files)
 
         gatk_haploid_tsv = files[files.str.contains("{}.+haploid".format(sample))].item()
         gatk_diploid_tsv = files[files.str.contains("{}.+diploid".format(sample))].item()
@@ -202,6 +213,10 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
     # merge SNP sets with different leniency together, so subsequent operations can be performed once:
     df = pd.concat([hgatk, dgatk]).reset_index(drop=True)
 
+	# if both dataframes are empty, just output two empty file with column names:
+    if len(df) == 0:
+        return df
+
     # if reference strain is recombinant, no homology info is needed, we're just looking
     # at SNPs in the cloned loci
     if reference_strain == 'recombinant':
@@ -211,6 +226,7 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
         return df
 
     # open reference annotation data:
+    print(reference_strain)
     ref_genbank = SeqIO.read(genbank_dict[reference_strain], "genbank")
 
     # if reference is H37Rv, get H37RvCO to H37Rv homology information and merge in annotation data:
@@ -220,6 +236,16 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
 
         df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
             blast_h37rv, axis=1, args=(h37rvCO_reference_genome, blast_dir, h37rv_annotation_location))
+
+        df = generate_annotated_df(df, "H37Rv_homolog_position", ref_genbank)
+
+    # if reference is H37Rv, get H37RvCO to H37Rv homology information and merge in annotation data:
+    elif reference_strain == 'H37Rv':
+        h37rv_annotation_location = fasta_dict['H37Rv']
+        h37rvMA_reference_genome = SeqIO.read(fasta_dict['H37RvMA'], format="fasta")
+
+        df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
+            blast_h37rv, axis=1, args=(h37rvMA_reference_genome, blast_dir, h37rv_annotation_location))
 
         df = generate_annotated_df(df, "H37Rv_homolog_position", ref_genbank)
 
@@ -335,9 +361,15 @@ def get_error_probability(quality):
 
 def format_vcf_fields(df, stringency):
 
-    column_check = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'sample.GT', 'sample.GQ', 'sample.PL', 'sample.AD',
-                    'sample.DP']
-    #assert df.columns.tolist() == column_check  # vcf df in unexpected format
+    original_vcf_columns = ['CHROM', 'POS', 'REF', 'ALT', 'QUAL', 'sample.GT', 
+                            'sample.GQ', 'sample.PL', 'sample.AD', 'sample.DP']
+    df_cols_to_return = ['Ref_genome', 'Pos', 'Ref', 'Alt', 'Qual', 'Error_prob', 'Accuracy_prob', 
+                         'GT', 'GQ', 'DP', 'Ref_reads', 'Alt_reads', 'Stringency']
+    #assert df.columns.tolist() == original_vcf_columns  # vcf df in unexpected format
+
+    if len(df) == 0:
+        df = pd.DataFrame(columns=df_cols_to_return)
+        return df
 
     # split allele depth column into reference allele count and alternate allele count columns
     df[["Ref_reads", "Alt_reads"]] = df['sample.AD'].str.split(',', expand=True)[[0, 1]]
@@ -356,8 +388,7 @@ def format_vcf_fields(df, stringency):
     df['Stringency'] = stringency
 
     # reorder columns and drop composite_hits:
-    df = df[['Ref_genome', 'Pos', 'Ref', 'Alt', 'Qual', 'Error_prob', 'Accuracy_prob',
-             'GT', 'GQ', 'DP', 'Ref_reads', 'Alt_reads', 'Stringency']]
+    df = df[df_cols_to_return]
 
     # returns vcf tsvs with common sense column names, and error and accuracy metric cols added in
     # any other columns worth adding??
@@ -419,7 +450,7 @@ def get_genbank_annotation_df(genome: SeqRecord) -> pd.DataFrame:
             if 'product' in feature.qualifiers:
                 feature_dict['Feature_description'] = feature.qualifiers['product'][0]
 
-        elif feature.type == 'misc_feature':
+        elif (feature.type == 'misc_feature') and ('locus_tag' in feature.qualifiers):
             feature_dict['Feature_tag'] = feature.qualifiers['locus_tag'][0]
 
             if 'old_locus_tag' in feature.qualifiers:
@@ -794,10 +825,13 @@ def write_excel_file(df, filename):
     :param filename: filename dest (str)
     :return: None
     """
+    if len(df) == 0:
+        dfs_to_write = {'Stringent': df, 'Lenient': df}
 
-    dfs_to_write = {
-        'Stringent': df[df['Stringency'] == 'stringent'].drop(columns='Stringency').sort_values(by='Pos'),
-        'Lenient': df[df['Stringency'] == 'lenient'].drop(columns='Stringency').sort_values(by='Pos')
+    else:
+        dfs_to_write = {
+                        'Stringent': df[df['Stringency'] == 'stringent'].drop(columns='Stringency').sort_values(by='Pos'),
+                        'Lenient': df[df['Stringency'] == 'lenient'].drop(columns='Stringency').sort_values(by='Pos')
                    }
 
     writer = pd.ExcelWriter(filename)
