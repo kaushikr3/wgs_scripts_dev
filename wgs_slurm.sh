@@ -29,7 +29,7 @@ Lab_strain=UMass
 PDIM_strain=H37RvCO
 
 FILELIST=filelist
-BAMLIST=bamlist
+#BAMLIST=bamlist
 
 spack load -r python@3.7.0^gcc@6.3.0
 spack load samtools@1.9%gcc@6.3.0
@@ -41,8 +41,8 @@ sh ~/wgs/wgs_scripts_dev/bash_scripts/align_and_clean_specific.sh \
 		-R "$REF_FA" -I "$IN_DIR" -N "$SLURM_CPUS_PER_TASK" -F "$FILELIST"
 
 ## run SNP caller
-#sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv.sh -R "$REF_FA" 
-sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv_specific.sh -R "$REF_FA" -F "$BAMLIST"
+sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv.sh -R "$REF_FA" 
+#sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv_specific.sh -R "$REF_FA" -F "$BAMLIST"
 
 spack unload samtools@1.9%gcc@6.3.0
 spack unload bwa@0.7.15%gcc@6.3.0
