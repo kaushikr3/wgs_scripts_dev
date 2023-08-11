@@ -54,15 +54,16 @@ echo " ----  Aligning files against ref: ${REF} ----"
 while read f
 	do
 
-			#echo "Aligning ${f} and ${f/R1_001_val_1/R2_001_val_2} with BWA MEM" 
-			echo "Aligning ${f} and ${f/1_val_1/2_val_2} with BWA MEM" 
-			#OUTNAME=$(basename ${f})
+			echo "Aligning ${f} and ${f/R1_001_val_1/R2_001_val_2} with BWA MEM" 
+			OUTNAME=$(basename ${f})
 
-			#bwa mem -M -t "$NUM_CORES" "$REF" "$f" "${f/R1_001_val_1/R2_001_val_2}" | \
-			#    samtools view -Shb - > bam/"${OUTNAME/R1_001_val_1.fq.gz/unsorted.bam}"
+			bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/R1_001_val_1/R2_001_val_2}" | \
+			    samtools view -Shb - > bam/"${OUTNAME/R1_001_val_1.fq.gz/unsorted.bam}"
 
-			bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/1_val_1/2_val_2}" | \
-			    samtools view -Shb - > bam/"${f/1_val_1.fq.gz/unsorted.bam}"
+			#echo "Aligning ${f} and ${f/1_val_1/2_val_2} with BWA MEM" 
+
+			#bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/1_val_1/2_val_2}" | \
+			#    samtools view -Shb - > bam/"${f/1_val_1.fq.gz/unsorted.bam}"
 
 	done < "$file_list"
 
