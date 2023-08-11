@@ -13,7 +13,7 @@ function usage {
         echo '   -R   path to reference_genome.fa'
         echo '   -I   relative path to trimmed fastq dir'
         echo '   -N   number of cores avaliable'
-        echo '   -F   file list to process with 1_val_1.fq.gz filenames'
+        echo '   -F   file list to process with R1_001_val_1.fq.gz filenames'
         exit 1
 }
 
@@ -54,16 +54,16 @@ echo " ----  Aligning files against ref: ${REF} ----"
 while read f
 	do
 
-			echo "Aligning ${f} and ${f/R1_001_val_1/R2_001_val_2} with BWA MEM" 
+			echo "Aligning ${f} and ${f/R1_00R1_001_val_1/R2_001_val_2} with BWA MEM" 
 			OUTNAME=$(basename ${f})
 
-			bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/R1_001_val_1/R2_001_val_2}" | \
-			    samtools view -Shb - > bam/"${OUTNAME/R1_001_val_1.fq.gz/unsorted.bam}"
+			bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/R1_00R1_001_val_1/R2_001_val_2}" | \
+			    samtools view -Shb - > bam/"${OUTNAME/R1_00R1_001_val_1.fq.gz/unsorted.bam}"
 
-			#echo "Aligning ${f} and ${f/1_val_1/2_val_2} with BWA MEM" 
+			#echo "Aligning ${f} and ${f/R1_001_val_1/2_val_2} with BWA MEM" 
 
-			#bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/1_val_1/2_val_2}" | \
-			#    samtools view -Shb - > bam/"${f/1_val_1.fq.gz/unsorted.bam}"
+			#bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/R1_001_val_1/2_val_2}" | \
+			#    samtools view -Shb - > bam/"${f/R1_001_val_1.fq.gz/unsorted.bam}"
 
 	done < "$file_list"
 
@@ -78,13 +78,13 @@ while read f
 			
 			# clean unsorted bamfile:
 			picard CleanSam \
-					INPUT=bam/"${f/1_val_1.fq.gz/unsorted.bam}" \
-					OUTPUT=bam/"${f/1_val_1.fq.gz/unsorted.cleaned.bam}"
+					INPUT=bam/"${f/R1_001_val_1.fq.gz/unsorted.bam}" \
+					OUTPUT=bam/"${f/R1_001_val_1.fq.gz/unsorted.cleaned.bam}"
 			
 			picard AddOrReplaceReadGroups \
-					I=bam/"${f/1_val_1.fq.gz/unsorted.cleaned.bam}" \
-					O=bam/"${f/1_val_1.fq.gz/RG.bam}" \
-          			RGID="${f/1_val_1.fq.gz/unsorted.bam/}" \
+					I=bam/"${f/R1_001_val_1.fq.gz/unsorted.cleaned.bam}" \
+					O=bam/"${f/R1_001_val_1.fq.gz/RG.bam}" \
+          			RGID="${f/R1_001_val_1.fq.gz/unsorted.bam/}" \
           			RGPL=ILLUMINA \
           			RGLB=lib \
           			RGPU=unit \
@@ -96,18 +96,18 @@ while read f
 #         			USE_JDK_DEFLATER=true USE_JDK_INFLATER=true
 
 			# sort bam 
-			samtools sort -o bam/"${f/1_val_1.fq.gz/sorted.bam}" -O bam -T "${f/1_val_1.fq.gz/}" -@ 8 bam/"${f/1_val_1.fq.gz/RG.bam}"
-			#samtools sort -o bam/"${f/1_val_1.fq.gz/sorted.bam}" -O bam -T temp -@ 8 bam/"${f/1_val_1.fq.gz/RG.bam}"
+			samtools sort -o bam/"${f/R1_001_val_1.fq.gz/sorted.bam}" -O bam -T "${f/R1_001_val_1.fq.gz/}" -@ 8 bam/"${f/R1_001_val_1.fq.gz/RG.bam}"
+			#samtools sort -o bam/"${f/R1_001_val_1.fq.gz/sorted.bam}" -O bam -T temp -@ 8 bam/"${f/R1_001_val_1.fq.gz/RG.bam}"
 		   
 			echo "Running MarkDuplicates ${f}" 
 			picard MarkDuplicates \
-					INPUT=bam/"${f/1_val_1.fq.gz/sorted.bam}" \
-					OUTPUT=bam/"${f/1_val_1.fq.gz/dedup.bam}" \
-					METRICS_FILE=reports/"${f/1_val_1.fq.gz/dedup.metrics.txt}" \
+					INPUT=bam/"${f/R1_001_val_1.fq.gz/sorted.bam}" \
+					OUTPUT=bam/"${f/R1_001_val_1.fq.gz/dedup.bam}" \
+					METRICS_FILE=reports/"${f/R1_001_val_1.fq.gz/dedup.metrics.txt}" \
 					ASSUME_SORTED=true
 	
 			# index bam 
-			samtools index bam/"${f/1_val_1.fq.gz/dedup.bam}" 
+			samtools index bam/"${f/R1_001_val_1.fq.gz/dedup.bam}" 
 
 	done < "$file_list"
 
@@ -119,10 +119,10 @@ while read f
 	do
 
 			echo "Indexing ##################"
-			echo "BAM  bam/${f/1_val_1.fq.gz/dedup.bam}" >> reports/samtools_stats.log
+			echo "BAM  bam/${f/R1_001_val_1.fq.gz/dedup.bam}" >> reports/samtools_stats.log
 			
-			#samtools index bam/"${f/1_val_1.fq.gz/dedup.bam}" 
-			samtools flagstat bam/"${f/1_val_1.fq.gz/dedup.bam}" >> reports/samtools_stats.log
+			#samtools index bam/"${f/R1_001_val_1.fq.gz/dedup.bam}" 
+			samtools flagstat bam/"${f/R1_001_val_1.fq.gz/dedup.bam}" >> reports/samtools_stats.log
 
 			echo %%%%%%%%%%%%%%% >> reports/samtools_stats.log
 			echo  >> reports/samtools_stats.log
