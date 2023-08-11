@@ -26,7 +26,9 @@ REF_GB=~/wgs/Reference/H37RvCO/H37RvCO.gbk
 
 Ref_strain=H37Rv
 
-FILELIST=trimmed_fastq_list
+SAMPLE_LIST=sample_name_list
+R1_FILE_ENDING=R1_001_val_1.fq.gz
+R2_FILE_ENDING=R2_001_val_2.fq.gz
 #BAMLIST=bamlist
 
 spack load -r python@3.7.0^gcc@6.3.0
@@ -36,7 +38,8 @@ spack load bwa@0.7.15%gcc@6.3.0
 ## run alignment: 
 ##sh ~/wgs/wgs_scripts_dev/bash_scripts/align_and_clean.sh -R "$REF_FA" -I "$IN_DIR" -N "$SLURM_CPUS_PER_TASK"
 sh ~/wgs/wgs_scripts_dev/bash_scripts/align_and_clean_specific.sh \
-		-R "$REF_FA" -I "$IN_DIR" -N "$SLURM_CPUS_PER_TASK" -F "$FILELIST"
+		-R "$REF_FA" -I "$IN_DIR" -N "$SLURM_CPUS_PER_TASK" -F "$SAMPLE_LIST" \
+		-R1 "$R1_FILE_ENDING" -R2 "$R2_FILE_ENDING"
 
 ## run SNP caller
 sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv.sh -R "$REF_FA" 
