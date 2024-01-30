@@ -169,11 +169,9 @@ def main():
         
         vcf_dict.update({'gatk_haploid': os.path.join(args.vcf_dir, gatk_haploid_tsv)})
         vcf_dict.update({'gatk_diploid': os.path.join(args.vcf_dir, gatk_diploid_tsv)})
-
         print(vcf_dict)
-        df = get_full_annotated_csv(vcf_dict['gatk_haploid'], vcf_dict['gatk_diploid'],
-                                    args.ref_strain, args.h37rv_homology, blast_sub_dir, args.lab_strain)
-
+        df = get_full_annotated_csv(vcf_dict['gatk_haploid'], vcf_dict['gatk_diploid'], args.ref_strain, args.h37rv_homology, blast_sub_dir, args.lab_strain)
+        
         write_excel_file(df, os.path.join(args.out, sample + "_SNP.xlsx"))
 
 
@@ -202,34 +200,16 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
     # merge SNP sets with different leniency together, so subsequent operations can be performed once:
     df = pd.concat([hgatk, dgatk]).reset_index(drop=True)
 
-    # if reference strain is recombinant, no homology info is needed, we're just looking
+    # open reference annotation data:
+    ref_genbank = SeqIO.read(genbank_dict[lab_strain], "genbank")
+	
+	# if reference strain is recombinant, no homology info is needed, we're just looking
     # at SNPs in the cloned loci
     if reference_strain == 'recombinant':
         # later on, add in ability to limit these by coordinates of recombinant features
-
-        df = df.fillna('NA')
-        return df
-
-    # open reference annotation data:
-    ref_genbank = SeqIO.read(genbank_dict[reference_strain], "genbank")
-
-    # if reference is H37Rv, get H37RvCO to H37Rv homology information and merge in annotation data:
-    if reference_strain == 'H37Rv':
-        h37rv_annotation_location = fasta_dict['H37Rv']
-        h37rvCO_reference_genome = SeqIO.read(fasta_dict['H37RvCO'], format="fasta")
-
-        df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
-            blast_h37rv, axis=1, args=(h37rvCO_reference_genome, blast_dir, h37rv_annotation_location))
-
-        df = generate_annotated_df(df, "H37Rv_homolog_position", ref_genbank)
-
-
-    # otherwise, annotate with given reference and generate in H37Rv homology data
-    else:
         df = generate_annotated_df(df, "Pos", ref_genbank)
 
         if h37rv_homology:
-
             annotation_col_dict = {
                 'Feature_type': 'H37Rv_feature_type',
                 'Distance': 'H37Rv_distance_to_feature',
@@ -266,6 +246,60 @@ def get_full_annotated_csv(gatk_haploid_parsed_path, gatk_diploid_parsed_path,
                 df['H37Rv_feature_type'].str.contains(';'), 'H37Rv_feature_type'].str.split(';', expand=True).apply(
                 lambda x: x[0] if (x[0] == x[1] or pd.isna(x[1]))
                 else "{};{}".format(x[0], x[1]), axis=1)
+
+	# if reference is H37Rv, get H37RvCO to H37Rv homology information and merge in annotation data:
+    if reference_strain == 'H37Rv':
+        h37rv_annotation_location = fasta_dict['H37Rv']
+        h37rvCO_reference_genome = SeqIO.read(fasta_dict['H37RvCO'], format="fasta")
+
+        df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
+            blast_h37rv, axis=1, args=(h37rvCO_reference_genome, blast_dir, h37rv_annotation_location))
+
+        df = generate_annotated_df(df, "H37Rv_homolog_position", ref_genbank)
+
+
+    # otherwise, annotate with given reference and generate in H37Rv homology data
+    else:
+        df = generate_annotated_df(df, "Pos", ref_genbank)
+
+        if h37rv_homology:
+            annotation_col_dict = {
+                'Feature_type': 'H37Rv_feature_type',
+                'Distance': 'H37Rv_distance_to_feature',
+                'Feature_name': 'H37Rv_feature_name',
+                'Gene_name': 'H37Rv_gene_name',
+                'Feature_description': 'H37Rv_feature_description'
+            }
+
+            h37rv_annotation_location = fasta_dict['H37Rv']
+            h37rv_gb = SeqIO.read(genbank_dict['H37Rv'], "genbank")
+            h37rv_annotation = get_genbank_annotation_df(h37rv_gb)
+
+            h37rv_feature_pr = pr.PyRanges(h37rv_annotation)
+            h37rv_translated_pr = pr.PyRanges(h37rv_annotation[h37rv_annotation['Feature_type'] != 'regulatory'][
+                                                  h37rv_annotation['Feature_type'] != 'misc_feature'])
+
+            df[['H37Rv_homolog_hits', 'H37Rv_homolog_%identity', 'H37Rv_homolog_position']] = df.apply(
+                blast_h37rv, axis=1, args=(ref_genbank, blast_dir, h37rv_annotation_location))
+
+            position_col_name = "H37Rv_homolog_position"
+            h37rv_homolog_columns = list(annotation_col_dict.values())
+
+            # pull in snp annotation data:
+            df[h37rv_homolog_columns] = df.apply(
+                lambda x: annotate_snp(x, position_col_name, h37rv_feature_pr, h37rv_translated_pr,
+                                       annotation_col_dict), axis=1)
+
+            # convert list entries to strings
+            df[h37rv_homolog_columns] = df[h37rv_homolog_columns].applymap(
+                lambda x: ";".join(map(str, x)) if isinstance(x, list) else x)
+
+            # simplify feature_type column; drop {};{} field unless there are actually two different feature types
+            df.loc[df['H37Rv_feature_type'].str.contains(';'), 'H37Rv_feature_type'] = df.loc[
+                df['H37Rv_feature_type'].str.contains(';'), 'H37Rv_feature_type'].str.split(';', expand=True).apply(
+                lambda x: x[0] if (x[0] == x[1] or pd.isna(x[1]))
+                else "{};{}".format(x[0], x[1]), axis=1)
+
 
     # # add lab_reference_info
     if lab_strain:
@@ -823,7 +857,7 @@ def write_excel_file(df, filename):
         for idx, col in enumerate(df):
             worksheet.set_column(idx, idx, 14)  # set column width
 
-    writer.save()
+    writer.close()
     print("Excel File Written")
 
 

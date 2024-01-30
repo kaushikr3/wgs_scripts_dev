@@ -8,7 +8,7 @@
 #SBATCH --mem=32G   # memory requested, units available: K,M,G,T
  
 source ~/.bashrc
-conda activate snippy
+conda activate wgs 
 
 python_path=$(dirname $(which python))
 
@@ -20,54 +20,36 @@ echo "This job was assigned the temporary (local) directory:" $TMPDIR >> slurm_o
 
 
 ## VARIABLES TO SET RUN-WISE::
-IN_DIR=/athena/schnappingerlab/scratch/nat4004/QUO1006113/trimmed_fastq
-REF_FA={recombinant_reference.fasta}
-REF_GB=~/wgs/Reference/H37RvCO/H37RvCO.gbk
+IN_DIR=/athena/schnappingerlab/scratch/kar4019/trimmed_fastq/
+REF_FA=/athena/schnappingerlab/scratch/kar4019/wgs/recom_ref_DL_OFF
+REF_GB=/athena/schnappingerlab/scratch/kar4019/Reference/H37RvCO/H37RvCO.gbk
 
 Ref_strain=H37Rv
 
-SAMPLE_LIST=sample_name_list
+SAMPLE_LIST=/athena/schnappingerlab/scratch/kar4019/sample_name_list
 R1_FILE_ENDING=R1_001_val_1.fq.gz
 R2_FILE_ENDING=R2_001_val_2.fq.gz
-#BAMLIST=bamlist
 
-spack load -r python@3.7.0^gcc@6.3.0
-spack load samtools@1.9%gcc@6.3.0
-spack load bwa@0.7.15%gcc@6.3.0
+#spack load -r python@3.7.0^gcc@6.3.0
+spack load /3jymtx6 #samtools
+spack load bwa@0.7.17%gcc@8.2.0 arch=linux-centos7-sandybridge
+spack load bedtools2@2.28.0%gcc@6.3.0
 
 ## run alignment: 
-##sh ~/wgs/wgs_scripts_dev/bash_scripts/align_and_clean.sh -R "$REF_FA" -I "$IN_DIR" -N "$SLURM_CPUS_PER_TASK"
-sh ~/wgs/wgs_scripts_dev/bash_scripts/align_and_clean_specific.sh \
+sh ~/wgs_scripts_dev/bash_scripts/align_and_clean_specific.sh \
 		-R "$REF_FA" -I "$IN_DIR" -N "$SLURM_CPUS_PER_TASK" -F "$SAMPLE_LIST" \
-		-R1 "$R1_FILE_ENDING" -R2 "$R2_FILE_ENDING"
+		-1 "$R1_FILE_ENDING" -2 "$R2_FILE_ENDING
 
-## run SNP caller
-sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv.sh -R "$REF_FA" 
-##sh ~/wgs/wgs_scripts_dev/bash_scripts/call_snv_specific.sh -R "$REF_FA" -F "$BAMLIST"
-
-spack unload samtools@1.9%gcc@6.3.0
-spack unload bwa@0.7.15%gcc@6.3.0
-
-## set everything up for running snp_csv_annotation.py script:
-spack load blast-plus@2.10.0
-export PATH="${python_path}:${PATH}"
-
-echo "%%% PRINTING PATH"
-echo $PATH
-
-## run vcf parsing
-sh ~/wgs/wgs_scripts_dev/bash_scripts/parse_vcf.sh -R "$REF_FA"
+##make bedgraph files:
+mkdir bedgraph
 
 
-## DIRECTORY SETUP
-mkdir snp_xlsx
-mkdir blast
+for f in bam/*dedup.bam
+do
+		echo "Writing .bedgraph for ${f}"
+		BASE=$(basename ${f})
 
-python ~/wgs/wgs_scripts_dev/python_analysis_scripts/snp_csv_annotation.py \
-	   	-ref_strain "$Ref_strain" \
-		-vcf vcf_parse \
-		-out snp_xlsx
-
+		bedtools genomecov -ibam "$f" -bg > bedgraph/"${BASE/bam/bedgraph}"
+done
 
 exit
-

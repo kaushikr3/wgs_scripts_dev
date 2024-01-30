@@ -8,8 +8,8 @@
 #SBATCH --mem=32G   # memory requested, units available: K,M,G,T
  
 source ~/.bashrc
-spack load bedtools2@2.28.0%gcc@6.3.0
- 
+conda activate wgs
+
 echo "This is job #:" $SLURM_JOB_ID >> slurm_output.log
 echo "Running on node:" `hostname` >> slurm_output.log
 echo "CPUS per task assigned:" "$SLURM_CPUS_PER_TASK" >> slurm_output.log

@@ -30,10 +30,7 @@ def main():
     args = my_parser.parse_args()
 
     names = [Path(x).stem for x in glob.glob(f'./{args.cov_dir}/*.cov')]
-    #pdim_range = pd.read_csv('~/wgs/metadata_wgs/PDIM_locations.csv')
-    pdim_range = pd.read_csv('~/wgs/metadata_wgs/PDIM_locations_new.csv')
-    # pdim_features = pd.read_csv(
-    #     f'./../../../Scripts/metadata/PDIM_{args.strain}_features.csv')
+    pdim_range = pd.read_csv('~/metadata_wgs/PDIM_locations_new.csv')
     covs = [pd.read_csv(f'{args.cov_dir}/{name}.cov', header=None,
                         names=['Strain', 'Location', 'Coverage'], sep='\t') for name in names]
 
@@ -41,7 +38,7 @@ def main():
     csvs_dict = dict(zip(names, csvs))
 
     selected_features = pd.read_csv(
-        f"~/wgs/metadata_wgs/PDIM_{args.strain}_features.csv")
+        f"~/metadata_wgs/PDIM_{args.strain}_features.csv")
     selected_features_pr = pr.PyRanges(selected_features)
     genome = SeqIO.read(args.genome_path, format="genbank")
 

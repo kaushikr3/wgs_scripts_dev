@@ -4,7 +4,6 @@
 # bwa
 # samtools
 # picard
-spack load picard
 
 # READ IN ARGUMENTS
 # usage:
@@ -65,28 +64,22 @@ while read f
 			bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/"$R1"/$R2}" | \
 			    samtools view -Shb - > bam/"${f/"$R1"/unsorted.bam}"
 
-			#OUTNAME=$(basename ${f})
-			#echo "Aligning ${f} and ${f/R1_001_val_1/2_val_2} with BWA MEM" 
-			#bwa mem -M -t "$NUM_CORES" "$REF" "$IN"/"$f" "$IN"/"${f/R1_001_val_1/2_val_2}" | \
-			#    samtools view -Shb - > bam/"${f/R1_001_val_1.fq.gz/unsorted.bam}"
-
 	done < "$sample_list"
 
 
 # PICARD TOOLS
-#for f in bam/*unsorted.bam
 
 while read f
 	do
 			echo "Cleaning and sorting ${f/"$R1"/} " 
-			#BASE=$(basename ${f})
-			
 			# clean unsorted bamfile:
-			picard CleanSam \
+
+			java -Xmx4g -jar /pbtech_mounts/softlib001/apps/EL7/spack/opt/spack/linux-centos7-x86_64/gcc-6.3.0/picard-2.18.3-fxqdhm52ms5i5vbfhhqgkrmasxkv3ahs/bin/picard.jar CleanSam \
 					INPUT=bam/"${f/"$R1"/unsorted.bam}" \
 					OUTPUT=bam/"${f/"$R1"/unsorted.cleaned.bam}"
 			
-			picard AddOrReplaceReadGroups \
+
+			java -Xmx4g -jar /pbtech_mounts/softlib001/apps/EL7/spack/opt/spack/linux-centos7-x86_64/gcc-6.3.0/picard-2.18.3-fxqdhm52ms5i5vbfhhqgkrmasxkv3ahs/bin/picard.jar AddOrReplaceReadGroups \
 					I=bam/"${f/"$R1"/unsorted.cleaned.bam}" \
 					O=bam/"${f/"$R1"/RG.bam}" \
           			RGID="${f/"$R1"/unsorted.bam/}" \
@@ -95,17 +88,13 @@ while read f
           			RGPU=unit \
          			RGSM=sample
 
-#          			RGSM="${BASE/unsorted.bam/}"
-#         			RGLB="${a/_sorted.bam/}" \
-#         			RGPU="${f/_sorted.bam/}" \
-#         			USE_JDK_DEFLATER=true USE_JDK_INFLATER=true
 
 			# sort bam 
 			samtools sort -o bam/"${f/"$R1"/sorted.bam}" -O bam -T "${f/"$R1"/}" -@ 8 bam/"${f/"$R1"/RG.bam}"
 			#samtools sort -o bam/"${f/R1_001_val_1.fq.gz/sorted.bam}" -O bam -T temp -@ 8 bam/"${f/R1_001_val_1.fq.gz/RG.bam}"
 		   
 			echo "Running MarkDuplicates ${f}" 
-			picard MarkDuplicates \
+			java -Xmx4g -jar /pbtech_mounts/softlib001/apps/EL7/spack/opt/spack/linux-centos7-x86_64/gcc-6.3.0/picard-2.18.3-fxqdhm52ms5i5vbfhhqgkrmasxkv3ahs/bin/picard.jar  MarkDuplicates \
 					INPUT=bam/"${f/"$R1"/sorted.bam}" \
 					OUTPUT=bam/"${f/"$R1"/dedup.bam}" \
 					METRICS_FILE=reports/"${f/"$R1"/dedup.metrics.txt}" \
@@ -118,7 +107,6 @@ while read f
 
 
 # EVAL BAMS
-#for f in bam/*dedup.bam
 
 while read f
 	do
@@ -135,5 +123,4 @@ while read f
 	done < "$sample_list"
 
 
-spack unload picard
 

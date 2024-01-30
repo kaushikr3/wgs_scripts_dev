@@ -4,7 +4,7 @@
 # conda packages: biopython, pandas, numpy, pyranges
 
 source ~/.bashrc
-conda activate snippy
+conda activate wgs
 
 # READ IN ARGUMENTS
 # usage:
@@ -55,7 +55,7 @@ done
 
 echo "Running pdim_check"
 
-python ~/wgs/wgs_scripts_dev/python_analysis_scripts/pdim_check_xlsx.py \
+python3 ~/wgs_scripts_dev/python_analysis_scripts/pdim_check_xlsx.py \
 		-strain "$STRAIN" -stringency Stringent -csv_dir "$CSV_DIR" -genome "$REF"
 
 
